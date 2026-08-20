@@ -18,11 +18,37 @@ public class Dave {
                 break;
             } else if (userIn.equals("list")) {
                 listTask();
+            } else if (userIn.startsWith("mark")) {
+                updateTaskStatus(userIn, true);
+            } else if (userIn.startsWith("unmark")) {
+                updateTaskStatus(userIn, false);
             } else {
                 addTask(userIn);
             }
         }
         sendByeMessage();
+    }
+
+    private static void updateTaskStatus(String userIn, boolean complete) {
+        // assume correct input format
+        int itemNumber = Integer.parseInt(userIn.split(" ")[1]);
+        if (itemNumber < 1 || itemNumber > tasks.size()) {
+            System.out.println(SEPARATOR);
+            System.out.println("Wrong number!");
+            System.out.println(SEPARATOR);
+            return;
+        }
+
+        Task task = tasks.get(itemNumber - 1);
+        task.setMark(complete);
+        System.out.println(SEPARATOR);
+        if (complete) {
+            System.out.println("Another one down!");
+        } else {
+            System.out.println("Negative progress...");
+        }
+        System.out.println(task);
+        System.out.println(SEPARATOR);
     }
 
     private static void listTask() {
