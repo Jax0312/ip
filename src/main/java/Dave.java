@@ -60,7 +60,7 @@ public class Dave {
     }
 
     private static void addTask(String description) {
-        tasks.add(new Task(description));
+        tasks.add(new Todo(description));
         System.out.println(SEPARATOR);
         System.out.printf("added: %s\n", description);
         System.out.println(SEPARATOR);
