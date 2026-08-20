@@ -29,7 +29,10 @@ public class Dave {
                 addDeadline(userIn);
             } else if (userIn.startsWith("event")) {
                 addEvent(userIn);
-            } else {
+            } else if (userIn.startsWith("delete")) {
+                deleteTask(userIn);
+            }
+            else {
                 System.out.println(SEPARATOR);
                 System.out.println("I'm afraid I cannot understand you");
                 System.out.println(SEPARATOR);
@@ -41,6 +44,22 @@ public class Dave {
             }
         }
         sendByeMessage();
+    }
+
+    private static void deleteTask(String userIn) {
+        int itemNumber = Integer.parseInt(userIn.split(" ")[1]);
+        if (itemNumber < 1 || itemNumber > tasks.size()) {
+            System.out.println(SEPARATOR);
+            System.out.println("Wrong number!");
+            System.out.println(SEPARATOR);
+            return;
+        }
+
+        Task removedTask = tasks.remove(itemNumber - 1);
+        System.out.println(SEPARATOR);
+        System.out.println("Affirmative! This task was removed:");
+        System.out.printf("    %s\n", removedTask);
+        System.out.println(SEPARATOR);
     }
 
     private static void updateTaskStatus(String userIn, boolean complete) {
