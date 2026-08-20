@@ -22,8 +22,17 @@ public class Dave {
                 updateTaskStatus(userIn, true);
             } else if (userIn.startsWith("unmark")) {
                 updateTaskStatus(userIn, false);
+            } else if (userIn.startsWith("todo")) {
+                addTodo(userIn);
+            } else if (userIn.startsWith("deadline")) {
+                addDeadline(userIn);
+            } else if (userIn.startsWith("event")) {
+                addEvent(userIn);
             } else {
-                addTask(userIn);
+                // echo
+                System.out.println(SEPARATOR);
+                System.out.println(userIn);
+                System.out.println(SEPARATOR);
             }
         }
         sendByeMessage();
@@ -59,10 +68,27 @@ public class Dave {
         System.out.println(SEPARATOR);
     }
 
-    private static void addTask(String description) {
-        tasks.add(new Todo(description));
+    private static void addDeadline(String userIn) {
+        userIn = userIn.substring(9);
+        String[] attributes = userIn.split("/by ");
+        addTask(new Deadline(attributes[0], attributes[1]));
+    }
+
+    private static void addEvent(String userIn) {
+        userIn =  userIn.substring(6);
+        String[] attributes = userIn.split("/from ");
+        String[] time = attributes[1].split("/to ");
+        addTask(new Event(attributes[0], time[0], time[1]));
+    }
+
+    private static void addTodo(String userIn) {
+        addTask(new Todo(userIn.substring(5)));
+    }
+
+    private static void addTask(Task task) {
+        tasks.add(task);
         System.out.println(SEPARATOR);
-        System.out.printf("added: %s\n", description);
+        System.out.printf("added: %s\n", task);
         System.out.println(SEPARATOR);
     }
 
