@@ -11,32 +11,50 @@ public class Dave {
 
         sendGreetings();
         Scanner scanner = new Scanner(System.in);
+        boolean isRunning = true;
 
-        while (true) {
+        while (isRunning) {
             try {
-            String userIn = scanner.nextLine();
-            if (userIn.equals("bye")) {
-                break;
-            } else if (userIn.equals("list")) {
-                listTask();
-            } else if (userIn.startsWith("mark")) {
-                updateTaskStatus(userIn, true);
-            } else if (userIn.startsWith("unmark")) {
-                updateTaskStatus(userIn, false);
-            } else if (userIn.startsWith("todo")) {
-                addTodo(userIn);
-            } else if (userIn.startsWith("deadline")) {
-                addDeadline(userIn);
-            } else if (userIn.startsWith("event")) {
-                addEvent(userIn);
-            } else if (userIn.startsWith("delete")) {
-                deleteTask(userIn);
+            String userIn = scanner.nextLine().trim();
+
+            if (userIn.isEmpty()) {
+                continue;
             }
-            else {
-                System.out.println(SEPARATOR);
-                System.out.println("I'm afraid I cannot understand you");
-                System.out.println(SEPARATOR);
-            }
+                String[] parts = userIn.split("\\s+", 2);
+                Command command = Command.from(parts[0]);
+
+                switch (command) {
+                    case BYE:
+                        isRunning = false;
+                        break;
+                    case LIST:
+                        listTask();
+                        break;
+                    case MARK:
+                        updateTaskStatus(parts[1], true);
+                        break;
+                    case UNMARK:
+                        updateTaskStatus(parts[1], false);
+                        break;
+                    case TODO:
+                        addTodo(parts[1]);
+                        break;
+                    case DEADLINE:
+                        addDeadline(parts[1]);
+                        break;
+                    case EVENT:
+                        addEvent(parts[1]);
+                        break;
+                    case DELETE:
+                        deleteTask(parts[1]);
+                        break;
+                    case UNKNOWN:
+                    default:
+                        System.out.println(SEPARATOR);
+                        System.out.println("I'm afraid I cannot understand you");
+                        System.out.println(SEPARATOR);
+                        break;
+                }
             } catch (DaveCommandException e) {
                 System.out.println(SEPARATOR);
                 System.out.println(e.getMessage());
@@ -47,7 +65,7 @@ public class Dave {
     }
 
     private static void deleteTask(String userIn) {
-        int itemNumber = Integer.parseInt(userIn.split(" ")[1]);
+        int itemNumber = Integer.parseInt(userIn);
         if (itemNumber < 1 || itemNumber > tasks.size()) {
             System.out.println(SEPARATOR);
             System.out.println("Wrong number!");
@@ -64,7 +82,7 @@ public class Dave {
 
     private static void updateTaskStatus(String userIn, boolean complete) {
         // assume correct input format
-        int itemNumber = Integer.parseInt(userIn.split(" ")[1]);
+        int itemNumber = Integer.parseInt(userIn);
         if (itemNumber < 1 || itemNumber > tasks.size()) {
             System.out.println(SEPARATOR);
             System.out.println("Wrong number!");
@@ -93,7 +111,6 @@ public class Dave {
     }
 
     private static void addDeadline(String userIn) {
-        userIn = userIn.substring(8);
         String[] attributes = userIn.split(" /by ");
         if (attributes.length < 2) {
             throw new DaveCommandException("NEGATIVE! A deadline requires /by [time]");
@@ -102,7 +119,6 @@ public class Dave {
     }
 
     private static void addEvent(String userIn) {
-        userIn =  userIn.substring(5);
         String[] attributes = userIn.split(" /from ");
         if (attributes.length < 2) {
             throw new DaveCommandException("NEGATIVE! An event requires /from [time] and /to [time]");
@@ -115,11 +131,10 @@ public class Dave {
     }
 
     private static void addTodo(String userIn) {
-        String description = userIn.substring(4);
-        if (description.isEmpty()) {
+        if (userIn.isEmpty()) {
             throw new DaveCommandException("NEGATIVE! The description of a todo cannot be empty");
         }
-        addTask(new Todo(userIn.substring(5)));
+        addTask(new Todo(userIn));
     }
 
     private static void addTask(Task task) {
