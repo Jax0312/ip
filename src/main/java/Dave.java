@@ -1,3 +1,5 @@
+import java.util.Scanner;
+
 public class Dave {
 
     static String NAME = "Dave";
@@ -6,6 +8,17 @@ public class Dave {
     public static void main(String[] args) {
 
         sendGreetings();
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            String userIn = scanner.nextLine();
+            if (userIn.equals("bye")) {
+                break;
+            }
+            // echo
+            System.out.println(SEPARATOR);
+            System.out.println(userIn);
+            System.out.println(SEPARATOR);
+        }
         sendByeMessage();
     }
 
@@ -24,6 +37,7 @@ public class Dave {
     }
 
     private static void sendByeMessage() {
+        System.out.println(SEPARATOR);
         System.out.println("The wind calls. Farewell!");
         System.out.println(SEPARATOR);
     }
