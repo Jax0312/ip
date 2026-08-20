@@ -5,7 +5,7 @@ public class Dave {
 
     static String NAME = "Dave";
     static String SEPARATOR = "____________________________________________________________";
-    static ArrayList<String> tasks = new ArrayList<>();
+    static ArrayList<Task> tasks = new ArrayList<>();
 
     public static void main(String[] args) {
 
@@ -33,10 +33,10 @@ public class Dave {
         System.out.println(SEPARATOR);
     }
 
-    private static void addTask(String task) {
-        tasks.add(task);
+    private static void addTask(String description) {
+        tasks.add(new Task(description));
         System.out.println(SEPARATOR);
-        System.out.printf("added: %s\n", task);
+        System.out.printf("added: %s\n", description);
         System.out.println(SEPARATOR);
     }
 
