@@ -4,182 +4,111 @@
  */
 public class Dave {
 
-    /** Path to the data file used for persistent storage. */
-    private static final String DATA_FILE_PATH = "data/dave.txt";
+    /** Default path to the data file used for persistent storage. */
+    private static final String DEFAULT_FILE_PATH = "data/dave.txt";
 
     /** User interface handler responsible for all input and output. */
-    private static Ui ui = new Ui();
+    private final Ui ui;
     /** Storage handler responsible for loading and saving tasks on disk. */
-    private static Storage storage = new Storage(DATA_FILE_PATH);
+    private final Storage storage;
     /** List of tasks currently managed by the chatbot. */
-    private static TaskList tasks;
+    private TaskList tasks;
 
     /**
-     * Starts the Dave chatbot application and processes user commands until exit.
+     * Constructs a new Dave chatbot application instance with the specified data file path.
      *
-     * @param args Command line arguments.
+     * @param filePath Relative or absolute path to the data file.
      */
-    public static void main(String[] args) {
+    public Dave(String filePath) {
+        this.ui = new Ui();
+        this.storage = new Storage(filePath);
         try {
-            tasks = new TaskList(storage.load());
+            this.tasks = new TaskList(this.storage.load());
         } catch (DaveCommandException e) {
-            ui.showLoadingError(e.getMessage());
-            tasks = new TaskList();
+            this.ui.showLoadingError(e.getMessage());
+            this.tasks = new TaskList();
         }
+    }
 
-        ui.showWelcome();
+    /**
+     * Runs the Dave chatbot application, reading and processing user commands until exit.
+     */
+    public void run() {
+        this.ui.showWelcome();
         boolean isRunning = true;
 
         while (isRunning) {
             try {
-                String userIn = ui.readCommand();
+                String userIn = this.ui.readCommand();
 
                 if (userIn.isEmpty()) {
                     continue;
                 }
-                String[] parts = userIn.split("\\s+", 2);
-                Command command = Command.from(parts[0]);
+
+                Command command = Parser.parseCommand(userIn);
+                String arguments = Parser.parseArguments(userIn);
 
                 switch (command) {
                     case BYE:
                         isRunning = false;
                         break;
                     case LIST:
-                        listTask();
+                        this.ui.showTaskList(this.tasks.asList());
                         break;
                     case MARK:
-                        updateTaskStatus(parts[1], true);
+                        updateTaskStatus(arguments, true);
                         break;
                     case UNMARK:
-                        updateTaskStatus(parts[1], false);
+                        updateTaskStatus(arguments, false);
                         break;
                     case TODO:
-                        addTodo(parts[1]);
+                        addTask(Parser.parseTodo(arguments));
                         break;
                     case DEADLINE:
-                        addDeadline(parts[1]);
+                        addTask(Parser.parseDeadline(arguments));
                         break;
                     case EVENT:
-                        addEvent(parts[1]);
+                        addTask(Parser.parseEvent(arguments));
                         break;
                     case DELETE:
-                        deleteTask(parts[1]);
+                        deleteTask(arguments);
                         break;
                     case UNKNOWN:
                         // Fallthrough
                     default:
-                        ui.showError("I'm afraid I cannot understand you");
+                        this.ui.showError("I'm afraid I cannot understand you");
                         break;
                 }
             } catch (DaveCommandException e) {
-                ui.showError(e.getMessage());
+                this.ui.showError(e.getMessage());
             }
         }
-        ui.showGoodbye();
+        this.ui.showGoodbye();
     }
 
     /**
-     * Deletes a task from the task list according to the specified 1-based index.
+     * Deletes a task from the task list according to the specified 1-based index string.
      *
-     * @param userIn User input containing the index of the task to be removed.
+     * @param arguments User input arguments containing the index of the task to be removed.
      */
-    private static void deleteTask(String userIn) {
-        int itemNumber;
-        try {
-            itemNumber = Integer.parseInt(userIn);
-        } catch (NumberFormatException e) {
-            throw new DaveCommandException("Wrong number!");
-        }
-
-        Task removedTask = tasks.delete(itemNumber - 1);
+    private void deleteTask(String arguments) {
+        int index = Parser.parseIndex(arguments);
+        Task removedTask = this.tasks.delete(index);
         saveTasks();
-        ui.showTaskDeleted(removedTask);
+        this.ui.showTaskDeleted(removedTask);
     }
 
     /**
-     * Updates the completion status of a task based on the specified 1-based index.
+     * Updates the completion status of a task based on the specified 1-based index string.
      *
-     * @param userIn User input containing the index of the task to be updated.
+     * @param arguments User input arguments containing the index of the task to be updated.
      * @param isComplete True if the task should be marked as completed, false otherwise.
      */
-    private static void updateTaskStatus(String userIn, boolean isComplete) {
-        int itemNumber;
-        try {
-            itemNumber = Integer.parseInt(userIn);
-        } catch (NumberFormatException e) {
-            throw new DaveCommandException("Wrong number!");
-        }
-
-        Task task = tasks.setDone(itemNumber - 1, isComplete);
+    private void updateTaskStatus(String arguments, boolean isComplete) {
+        int index = Parser.parseIndex(arguments);
+        Task task = this.tasks.setDone(index, isComplete);
         saveTasks();
-        ui.showTaskStatusUpdated(task, isComplete);
-    }
-
-    /**
-     * Prints all tasks currently stored in the task list.
-     */
-    private static void listTask() {
-        ui.showTaskList(tasks.asList());
-    }
-
-    /**
-     * Parses the deadline description and date/time from user input, and adds the deadline task.
-     *
-     * @param userIn User input containing deadline description and '/by' date/time in yyyy-MM-dd or yyyy-MM-dd HH:mm.
-     * @throws DaveCommandException If delimiters are missing, description is empty, or date/time format is invalid.
-     */
-    private static void addDeadline(String userIn) {
-        String[] attributes = userIn.split(" /by ");
-        if (attributes.length < 2) {
-            throw new DaveCommandException("NEGATIVE! A deadline requires /by [time]");
-        }
-        if (attributes[0].trim().isEmpty()) {
-            throw new DaveCommandException("NEGATIVE! The description of a deadline cannot be empty");
-        }
-
-        ParsedDateTime parsed = DateTimeParser.parse(attributes[1]);
-        addTask(new Deadline(attributes[0].trim(), parsed.getDateTime(), parsed.hasTime()));
-    }
-
-    /**
-     * Parses the event description and dates/times from user input, and adds the event task.
-     *
-     * @param userIn User input containing description, '/from' date/time, and '/to' date/time.
-     * @throws DaveCommandException If delimiters are missing, description is empty, or date/time formats are invalid.
-     */
-    private static void addEvent(String userIn) {
-        String[] attributes = userIn.split(" /from ");
-        if (attributes.length < 2) {
-            throw new DaveCommandException("NEGATIVE! An event requires /from [time] and /to [time]");
-        }
-        if (attributes[0].trim().isEmpty()) {
-            throw new DaveCommandException("NEGATIVE! The description of an event cannot be empty");
-        }
-
-        String[] fromTo = attributes[1].split(" /to ");
-        if (fromTo.length < 2) {
-            throw new DaveCommandException("NEGATIVE! An event requires /from [time] and /to [time]");
-        }
-
-        ParsedDateTime fromParsed = DateTimeParser.parse(fromTo[0]);
-        ParsedDateTime toParsed = DateTimeParser.parse(fromTo[1]);
-
-        addTask(new Event(attributes[0].trim(),
-                fromParsed.getDateTime(), fromParsed.hasTime(),
-                toParsed.getDateTime(), toParsed.hasTime()));
-    }
-
-    /**
-     * Parses the todo description from user input and adds the todo task.
-     *
-     * @param userIn User input containing the todo description.
-     * @throws DaveCommandException If the todo description is empty.
-     */
-    private static void addTodo(String userIn) {
-        if (userIn.isEmpty()) {
-            throw new DaveCommandException("NEGATIVE! The description of a todo cannot be empty");
-        }
-        addTask(new Todo(userIn));
+        this.ui.showTaskStatusUpdated(task, isComplete);
     }
 
     /**
@@ -187,20 +116,29 @@ public class Dave {
      *
      * @param task Task to be added.
      */
-    private static void addTask(Task task) {
-        tasks.add(task);
+    private void addTask(Task task) {
+        this.tasks.add(task);
         saveTasks();
-        ui.showTaskAdded(task);
+        this.ui.showTaskAdded(task);
     }
 
     /**
      * Saves the current list of tasks to persistent storage via the storage handler.
      */
-    private static void saveTasks() {
+    private void saveTasks() {
         try {
-            storage.save(tasks.asList());
+            this.storage.save(this.tasks.asList());
         } catch (DaveCommandException e) {
-            ui.showSavingError(e.getMessage());
+            this.ui.showSavingError(e.getMessage());
         }
+    }
+
+    /**
+     * Starts the Dave chatbot application.
+     *
+     * @param args Command line arguments.
+     */
+    public static void main(String[] args) {
+        new Dave(DEFAULT_FILE_PATH).run();
     }
 }
