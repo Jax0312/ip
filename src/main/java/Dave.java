@@ -56,6 +56,7 @@ public class Dave {
                         deleteTask(parts[1]);
                         break;
                     case UNKNOWN:
+                        // Fallthrough
                     default:
                         System.out.println(SEPARATOR);
                         System.out.println("I'm afraid I cannot understand you");
@@ -88,7 +89,7 @@ public class Dave {
         System.out.println(SEPARATOR);
     }
 
-    private static void updateTaskStatus(String userIn, boolean complete) {
+    private static void updateTaskStatus(String userIn, boolean isComplete) {
         int itemNumber = Integer.parseInt(userIn);
         if (itemNumber < 1 || itemNumber > tasks.size()) {
             System.out.println(SEPARATOR);
@@ -98,10 +99,10 @@ public class Dave {
         }
 
         Task task = tasks.get(itemNumber - 1);
-        task.setMark(complete);
+        task.setDone(isComplete);
         saveList();
         System.out.println(SEPARATOR);
-        if (complete) {
+        if (isComplete) {
             System.out.println("Another one down!");
         } else {
             System.out.println("Negative progress...");
@@ -131,11 +132,11 @@ public class Dave {
         if (attributes.length < 2) {
             throw new DaveCommandException("NEGATIVE! An event requires /from [time] and /to [time]");
         }
-        String[] time = attributes[1].split(" /to ");
-        if (time.length < 2) {
+        String[] fromTo = attributes[1].split(" /to ");
+        if (fromTo.length < 2) {
             throw new DaveCommandException("NEGATIVE! An event requires /from [time] and /to [time]");
         }
-        addTask(new Event(attributes[0], time[0], time[1]));
+        addTask(new Event(attributes[0], fromTo[0], fromTo[1]));
     }
 
     private static void addTodo(String userIn) {
@@ -204,7 +205,7 @@ public class Dave {
                         continue;
                 }
 
-                task.setMark(isDone);
+                task.setDone(isDone);
                 loadedTasks.add(task);
             }
         } catch (IOException e) {

@@ -9,7 +9,7 @@ public class Deadline extends Task {
 
     @Override
     public String toFileFormat() {
-        return String.format("D | %d | %s | %s", super.getMark() ? 1 : 0, super.getDescription(), by);
+        return String.format("D | %d | %s | %s", super.getDone() ? 1 : 0, super.getDescription(), by);
     }
 
     @Override
