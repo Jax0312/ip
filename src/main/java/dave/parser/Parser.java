@@ -111,4 +111,18 @@ public class Parser {
             throw new DaveCommandException("Wrong number!");
         }
     }
+
+    /**
+     * Parses the search keyword from the find command arguments string.
+     *
+     * @param arguments Argument string containing the keyword.
+     * @return Search keyword.
+     * @throws DaveCommandException If the keyword is empty.
+     */
+    public static String parseFind(String arguments) {
+        if (arguments.trim().isEmpty()) {
+            throw new DaveCommandException("NEGATIVE! The search keyword cannot be empty");
+        }
+        return arguments.trim();
+    }
 }
