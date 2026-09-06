@@ -1,5 +1,7 @@
 package dave;
 
+import java.util.ArrayList;
+
 import dave.command.Command;
 import dave.exception.DaveCommandException;
 import dave.parser.Parser;
@@ -65,6 +67,9 @@ public class Dave {
                     case LIST:
                         this.ui.showTaskList(this.tasks.asList());
                         break;
+                    case FIND:
+                        findTasks(arguments);
+                        break;
                     case MARK:
                         updateTaskStatus(arguments, true);
                         break;
@@ -94,6 +99,17 @@ public class Dave {
             }
         }
         this.ui.showGoodbye();
+    }
+
+    /**
+     * Finds tasks matching the specified keyword and displays them to the user.
+     *
+     * @param arguments User input arguments containing the search keyword.
+     */
+    private void findTasks(String arguments) {
+        String keyword = Parser.parseFind(arguments);
+        ArrayList<Task> matchingTasks = this.tasks.find(keyword);
+        this.ui.showMatchingTasks(matchingTasks);
     }
 
     /**

@@ -9,6 +9,8 @@ public enum Command {
     BYE,
     /** Command to list all tracked tasks. */
     LIST,
+    /** Command to search for tasks by keyword. */
+    FIND,
     /** Command to mark a task as completed. */
     MARK,
     /** Command to mark a task as uncompleted. */

@@ -154,4 +154,18 @@ public class Ui {
         }
         showLine();
     }
+
+    /**
+     * Displays matching tasks found by keyword search with 1-based indexing.
+     *
+     * @param tasks List of matching tasks to display.
+     */
+    public void showMatchingTasks(List<Task> tasks) {
+        showLine();
+        System.out.println("Here are the matching tasks in your list:");
+        for (int i = 1; i <= tasks.size(); i++) {
+            System.out.printf("%d.%s\n", i, tasks.get(i - 1));
+        }
+        showLine();
+    }
 }

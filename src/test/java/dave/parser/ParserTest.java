@@ -22,6 +22,7 @@ public class ParserTest {
         assertEquals(Command.DEADLINE, Parser.parseCommand("deadline submit essay /by 2026-10-01"));
         assertEquals(Command.EVENT, Parser.parseCommand("event meeting /from 2026-10-01 /to 2026-10-02"));
         assertEquals(Command.LIST, Parser.parseCommand("list"));
+        assertEquals(Command.FIND, Parser.parseCommand("find book"));
         assertEquals(Command.MARK, Parser.parseCommand("mark 2"));
         assertEquals(Command.UNMARK, Parser.parseCommand("unmark 2"));
         assertEquals(Command.DELETE, Parser.parseCommand("delete 3"));
@@ -83,5 +84,17 @@ public class ParserTest {
     public void parseIndex_nonInteger_throwsDaveCommandException() {
         assertThrows(DaveCommandException.class, () -> Parser.parseIndex("abc"));
         assertThrows(DaveCommandException.class, () -> Parser.parseIndex(""));
+    }
+
+    @Test
+    public void parseFind_validKeyword_returnsTrimmedKeyword() {
+        assertEquals("book", Parser.parseFind("book"));
+        assertEquals("read book", Parser.parseFind("  read book  "));
+    }
+
+    @Test
+    public void parseFind_emptyKeyword_throwsDaveCommandException() {
+        assertThrows(DaveCommandException.class, () -> Parser.parseFind(""));
+        assertThrows(DaveCommandException.class, () -> Parser.parseFind("   "));
     }
 }
