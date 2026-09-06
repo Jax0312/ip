@@ -68,10 +68,10 @@ public class TaskListTest {
         this.taskList.add(task);
 
         this.taskList.setDone(0, true);
-        assertTrue(this.taskList.get(0).getDone());
+        assertTrue(this.taskList.get(0).isDone());
 
         this.taskList.setDone(0, false);
-        assertFalse(this.taskList.get(0).getDone());
+        assertFalse(this.taskList.get(0).isDone());
     }
 
     @Test

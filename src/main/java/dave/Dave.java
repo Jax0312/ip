@@ -59,35 +59,35 @@ public class Dave {
                 String arguments = Parser.parseArguments(userIn);
 
                 switch (command) {
-                    case BYE:
-                        isRunning = false;
-                        break;
-                    case LIST:
-                        this.ui.showTaskList(this.tasks.asList());
-                        break;
-                    case MARK:
-                        updateTaskStatus(arguments, true);
-                        break;
-                    case UNMARK:
-                        updateTaskStatus(arguments, false);
-                        break;
-                    case TODO:
-                        addTask(Parser.parseTodo(arguments));
-                        break;
-                    case DEADLINE:
-                        addTask(Parser.parseDeadline(arguments));
-                        break;
-                    case EVENT:
-                        addTask(Parser.parseEvent(arguments));
-                        break;
-                    case DELETE:
-                        deleteTask(arguments);
-                        break;
-                    case UNKNOWN:
-                        // Fallthrough
-                    default:
-                        this.ui.showError("I'm afraid I cannot understand you");
-                        break;
+                case BYE:
+                    isRunning = false;
+                    break;
+                case LIST:
+                    this.ui.showTaskList(this.tasks.asList());
+                    break;
+                case MARK:
+                    updateTaskStatus(arguments, true);
+                    break;
+                case UNMARK:
+                    updateTaskStatus(arguments, false);
+                    break;
+                case TODO:
+                    addTask(Parser.parseTodo(arguments));
+                    break;
+                case DEADLINE:
+                    addTask(Parser.parseDeadline(arguments));
+                    break;
+                case EVENT:
+                    addTask(Parser.parseEvent(arguments));
+                    break;
+                case DELETE:
+                    deleteTask(arguments);
+                    break;
+                case UNKNOWN:
+                    // Fallthrough
+                default:
+                    this.ui.showError("I'm afraid I cannot understand you");
+                    break;
                 }
             } catch (DaveCommandException e) {
                 this.ui.showError(e.getMessage());

@@ -76,7 +76,7 @@ public class Event extends Task {
                 ? this.to.format(DATE_TIME_FILE_FORMATTER)
                 : this.to.toLocalDate().toString();
         return String.format("E | %d | %s | %s | %s",
-                this.getDone() ? 1 : 0, this.getDescription(), fromString, toString);
+                this.isDone() ? 1 : 0, this.getDescription(), fromString, toString);
     }
 
     @Override

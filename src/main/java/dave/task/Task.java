@@ -26,17 +26,17 @@ public abstract class Task {
      *
      * @return True if the task is completed, false otherwise.
      */
-    public boolean getDone() {
+    public boolean isDone() {
         return this.isDone;
     }
 
     /**
      * Updates the completion status of the task.
      *
-     * @param done New completion status.
+     * @param isDone New completion status.
      */
-    public void setDone(boolean done) {
-        this.isDone = done;
+    public void setDone(boolean isDone) {
+        this.isDone = isDone;
     }
 
     /**

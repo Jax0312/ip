@@ -62,7 +62,7 @@ public class Deadline extends Task {
         String byString = this.hasTime
                 ? this.by.format(DATE_TIME_FILE_FORMATTER)
                 : this.by.toLocalDate().toString();
-        return String.format("D | %d | %s | %s", this.getDone() ? 1 : 0, this.getDescription(), byString);
+        return String.format("D | %d | %s | %s", this.isDone() ? 1 : 0, this.getDescription(), byString);
     }
 
     @Override

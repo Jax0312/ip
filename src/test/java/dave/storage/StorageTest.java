@@ -24,7 +24,7 @@ import dave.task.Todo;
 public class StorageTest {
 
     @TempDir
-    Path tempFolder;
+    private Path tempFolder;
 
     @Test
     public void load_nonExistentFile_returnsEmptyList() {
@@ -53,15 +53,15 @@ public class StorageTest {
 
         assertTrue(tasks.get(0) instanceof Todo);
         assertEquals("borrow book", tasks.get(0).getDescription());
-        assertTrue(tasks.get(0).getDone());
+        assertTrue(tasks.get(0).isDone());
 
         assertTrue(tasks.get(1) instanceof Deadline);
         assertEquals("return book", tasks.get(1).getDescription());
-        assertFalse(tasks.get(1).getDone());
+        assertFalse(tasks.get(1).isDone());
 
         assertTrue(tasks.get(2) instanceof Event);
         assertEquals("orientation", tasks.get(2).getDescription());
-        assertTrue(tasks.get(2).getDone());
+        assertTrue(tasks.get(2).isDone());
     }
 
     @Test

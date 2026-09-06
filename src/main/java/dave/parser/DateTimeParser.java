@@ -46,7 +46,7 @@ public class DateTimeParser {
             // Not a date-only string either
         }
 
-        throw new DaveCommandException(
-                "NEGATIVE! Date must be in yyyy-MM-dd or yyyy-MM-dd HH:mm format (e.g., 2019-10-15 or 2005-12-22 16:00)");
+        throw new DaveCommandException("NEGATIVE! Date must be in yyyy-MM-dd or yyyy-MM-dd HH:mm format "
+                + "(e.g., 2019-10-15 or 2005-12-22 16:00)");
     }
 }
