@@ -8,7 +8,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 /**
  * Represents the main entry point for the Dave chatbot application.
@@ -16,10 +15,8 @@ import java.util.Scanner;
  */
 public class Dave {
 
-    /** Name of the chatbot. */
-    static String NAME = "Dave";
-    /** Line separator printed between console messages. */
-    static String SEPARATOR = "____________________________________________________________";
+    /** User interface handler responsible for all input and output. */
+    private static Ui ui = new Ui();
     /** List of tasks currently managed by the chatbot. */
     static ArrayList<Task> tasks = new ArrayList<>();
 
@@ -33,13 +30,12 @@ public class Dave {
      */
     public static void main(String[] args) {
         tasks = loadList();
-        sendGreetings();
-        Scanner scanner = new Scanner(System.in);
+        ui.showWelcome();
         boolean isRunning = true;
 
         while (isRunning) {
             try {
-                String userIn = scanner.nextLine().trim();
+                String userIn = ui.readCommand();
 
                 if (userIn.isEmpty()) {
                     continue;
@@ -75,18 +71,14 @@ public class Dave {
                     case UNKNOWN:
                         // Fallthrough
                     default:
-                        System.out.println(SEPARATOR);
-                        System.out.println("I'm afraid I cannot understand you");
-                        System.out.println(SEPARATOR);
+                        ui.showError("I'm afraid I cannot understand you");
                         break;
                 }
             } catch (DaveCommandException e) {
-                System.out.println(SEPARATOR);
-                System.out.println(e.getMessage());
-                System.out.println(SEPARATOR);
+                ui.showError(e.getMessage());
             }
         }
-        sendByeMessage();
+        ui.showGoodbye();
     }
 
     /**
@@ -97,18 +89,13 @@ public class Dave {
     private static void deleteTask(String userIn) {
         int itemNumber = Integer.parseInt(userIn);
         if (itemNumber < 1 || itemNumber > tasks.size()) {
-            System.out.println(SEPARATOR);
-            System.out.println("Wrong number!");
-            System.out.println(SEPARATOR);
+            ui.showError("Wrong number!");
             return;
         }
 
         Task removedTask = tasks.remove(itemNumber - 1);
         saveList();
-        System.out.println(SEPARATOR);
-        System.out.println("Affirmative! This task was removed:");
-        System.out.printf("    %s\n", removedTask);
-        System.out.println(SEPARATOR);
+        ui.showTaskDeleted(removedTask);
     }
 
     /**
@@ -120,34 +107,21 @@ public class Dave {
     private static void updateTaskStatus(String userIn, boolean isComplete) {
         int itemNumber = Integer.parseInt(userIn);
         if (itemNumber < 1 || itemNumber > tasks.size()) {
-            System.out.println(SEPARATOR);
-            System.out.println("Wrong number!");
-            System.out.println(SEPARATOR);
+            ui.showError("Wrong number!");
             return;
         }
 
         Task task = tasks.get(itemNumber - 1);
         task.setDone(isComplete);
         saveList();
-        System.out.println(SEPARATOR);
-        if (isComplete) {
-            System.out.println("Another one down!");
-        } else {
-            System.out.println("Negative progress...");
-        }
-        System.out.println(task);
-        System.out.println(SEPARATOR);
+        ui.showTaskStatusUpdated(task, isComplete);
     }
 
     /**
      * Prints all tasks currently stored in the task list.
      */
     private static void listTask() {
-        System.out.println(SEPARATOR);
-        for (int i = 1; i <= tasks.size(); i++) {
-            System.out.printf("%d. %s\n", i, tasks.get(i - 1));
-        }
-        System.out.println(SEPARATOR);
+        ui.showTaskList(tasks);
     }
 
     /**
@@ -218,35 +192,7 @@ public class Dave {
     private static void addTask(Task task) {
         tasks.add(task);
         saveList();
-        System.out.println(SEPARATOR);
-        System.out.printf("added: %s\n", task);
-        System.out.println(SEPARATOR);
-    }
-
-    /**
-     * Displays the welcome banner and greeting message to the user.
-     */
-    private static void sendGreetings() {
-        String banner = """
-                ____
-                |  _ \\  __ ___   _____\s
-                | | | |/ _` \\ \\ / / _ \\
-                | |_| | (_| |\\ V /  __/
-                |____/ \\__,_| \\_/ \\___|
-                """;
-        System.out.println(SEPARATOR);
-        System.out.println(banner);
-        System.out.printf("Hello! I'm %s.\nAt your service!\n", NAME);
-        System.out.println(SEPARATOR);
-    }
-
-    /**
-     * Displays the farewell exit message to the user.
-     */
-    private static void sendByeMessage() {
-        System.out.println(SEPARATOR);
-        System.out.println("The wind calls. Farewell!");
-        System.out.println(SEPARATOR);
+        ui.showTaskAdded(task);
     }
 
     /**
@@ -291,9 +237,7 @@ public class Dave {
                             continue;
                     }
                 } catch (DaveCommandException e) {
-                    System.out.println(SEPARATOR);
-                    System.out.println("Warning: Skipping task with invalid date format: " + line);
-                    System.out.println(SEPARATOR);
+                    ui.showError("Warning: Skipping task with invalid date format: " + line);
                     continue;
                 }
 
@@ -301,9 +245,7 @@ public class Dave {
                 loadedTasks.add(task);
             }
         } catch (IOException e) {
-            System.out.println(SEPARATOR);
-            System.out.println("Warning: Unable to load tasks from disk: " + e.getMessage());
-            System.out.println(SEPARATOR);
+            ui.showLoadingError(e.getMessage());
         }
 
         return loadedTasks;
@@ -325,9 +267,7 @@ public class Dave {
 
             Files.write(DATA_FILE_PATH, lines);
         } catch (IOException e) {
-            System.out.println(SEPARATOR);
-            System.out.println("Warning: Unable to save tasks to disk: " + e.getMessage());
-            System.out.println(SEPARATOR);
+            ui.showSavingError(e.getMessage());
         }
     }
 
