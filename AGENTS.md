@@ -9,8 +9,8 @@ Unless the user says otherwise, assume that you are assisting a student working 
 # Student profile
 
 * Prior knowledge: Basic Java and OOP concepts.
-* Level of programming experience: [to be filled]
-* IDE and level of expertise: [to be filled]
+* Level of programming experience: Intermediate
+* IDE and level of expertise: Intermediate
 
 # Guidance for interacting with users
 
@@ -33,3 +33,10 @@ Ensure that Java 25 is used when running the application or build tasks. On macO
 Use lightweight tags unless the user requests an annotated tag.
 When proposing or creating a commit message, include enough detail to explain the rationale for the change.
 Do not commit or push unless explicitly asked.
+
+## Testing and Test Coverage
+
+* **Test coverage target**: Maintain a test coverage target of ~50% across candidate methods, focusing JUnit tests on the top ~50% highest-value methods (prioritizing complex, core, or critical business logic over trivial boilerplate).
+* **Test maintenance**: JUnit tests need to be updated after each code change to comply with the 50% test coverage target.
+* Follow the standard directory convention with test classes placed under `src/test/java/` matching the package structure of the target classes.
+* Ensure all tests pass cleanly via `./gradlew test` before concluding any feature change or refactoring.
