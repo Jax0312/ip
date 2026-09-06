@@ -2,6 +2,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -12,7 +16,9 @@ import java.util.Scanner;
  */
 public class Dave {
 
+    /** Name of the chatbot. */
     static String NAME = "Dave";
+    /** Line separator printed between console messages. */
     static String SEPARATOR = "____________________________________________________________";
     /** List of tasks currently managed by the chatbot. */
     static ArrayList<Task> tasks = new ArrayList<>();
@@ -145,35 +151,50 @@ public class Dave {
     }
 
     /**
-     * Parses the deadline description and time from user input, and adds the deadline task.
+     * Parses the deadline description and date/time from user input, and adds the deadline task.
      *
-     * @param userIn User input containing the deadline description and '/by' time.
-     * @throws DaveCommandException If the '/by' delimiter is missing.
+     * @param userIn User input containing deadline description and '/by' date/time in yyyy-MM-dd or yyyy-MM-dd HH:mm.
+     * @throws DaveCommandException If delimiters are missing, description is empty, or date/time format is invalid.
      */
     private static void addDeadline(String userIn) {
         String[] attributes = userIn.split(" /by ");
         if (attributes.length < 2) {
             throw new DaveCommandException("NEGATIVE! A deadline requires /by [time]");
         }
-        addTask(new Deadline(attributes[0], attributes[1]));
+        if (attributes[0].trim().isEmpty()) {
+            throw new DaveCommandException("NEGATIVE! The description of a deadline cannot be empty");
+        }
+
+        ParsedDateTime parsed = parseDateTime(attributes[1]);
+        addTask(new Deadline(attributes[0].trim(), parsed.getDateTime(), parsed.hasTime()));
     }
 
     /**
-     * Parses the event description and time bounds from user input, and adds the event task.
+     * Parses the event description and dates/times from user input, and adds the event task.
      *
-     * @param userIn User input containing the event description, '/from' time, and '/to' time.
-     * @throws DaveCommandException If either the '/from' or '/to' delimiter is missing.
+     * @param userIn User input containing description, '/from' date/time, and '/to' date/time.
+     * @throws DaveCommandException If delimiters are missing, description is empty, or date/time formats are invalid.
      */
     private static void addEvent(String userIn) {
         String[] attributes = userIn.split(" /from ");
         if (attributes.length < 2) {
             throw new DaveCommandException("NEGATIVE! An event requires /from [time] and /to [time]");
         }
+        if (attributes[0].trim().isEmpty()) {
+            throw new DaveCommandException("NEGATIVE! The description of an event cannot be empty");
+        }
+
         String[] fromTo = attributes[1].split(" /to ");
         if (fromTo.length < 2) {
             throw new DaveCommandException("NEGATIVE! An event requires /from [time] and /to [time]");
         }
-        addTask(new Event(attributes[0], fromTo[0], fromTo[1]));
+
+        ParsedDateTime fromParsed = parseDateTime(fromTo[0]);
+        ParsedDateTime toParsed = parseDateTime(fromTo[1]);
+
+        addTask(new Event(attributes[0].trim(),
+                fromParsed.getDateTime(), fromParsed.hasTime(),
+                toParsed.getDateTime(), toParsed.hasTime()));
     }
 
     /**
@@ -250,18 +271,30 @@ public class Dave {
                 boolean isDone = parts[1].equals("1");
                 Task task;
 
-                switch (type) {
-                    case "T":
-                        task = new Todo(parts[2]);
-                        break;
-                    case "D":
-                        task = new Deadline(parts[2], parts[3]);
-                        break;
-                    case "E":
-                        task = new Event(parts[2], parts[3], parts[4]);
-                        break;
-                    default:
-                        continue;
+                try {
+                    switch (type) {
+                        case "T":
+                            task = new Todo(parts[2]);
+                            break;
+                        case "D":
+                            ParsedDateTime deadlineBy = parseDateTime(parts[3]);
+                            task = new Deadline(parts[2], deadlineBy.getDateTime(), deadlineBy.hasTime());
+                            break;
+                        case "E":
+                            ParsedDateTime eventFrom = parseDateTime(parts[3]);
+                            ParsedDateTime eventTo = parseDateTime(parts[4]);
+                            task = new Event(parts[2],
+                                    eventFrom.getDateTime(), eventFrom.hasTime(),
+                                    eventTo.getDateTime(), eventTo.hasTime());
+                            break;
+                        default:
+                            continue;
+                    }
+                } catch (DaveCommandException e) {
+                    System.out.println(SEPARATOR);
+                    System.out.println("Warning: Skipping task with invalid date format: " + line);
+                    System.out.println(SEPARATOR);
+                    continue;
                 }
 
                 task.setDone(isDone);
@@ -295,6 +328,83 @@ public class Dave {
             System.out.println(SEPARATOR);
             System.out.println("Warning: Unable to save tasks to disk: " + e.getMessage());
             System.out.println(SEPARATOR);
+        }
+    }
+
+    /**
+     * Parses a date or date-time string into a ParsedDateTime object.
+     * Supports formats such as yyyy-MM-dd HH:mm, yyyy-MM-dd HHmm, and yyyy-MM-dd.
+     *
+     * @param input Raw date or date-time string from user input or file storage.
+     * @return Parsed date-time along with a flag indicating if time was specified.
+     * @throws DaveCommandException If the string cannot be parsed using any supported format.
+     */
+    private static ParsedDateTime parseDateTime(String input) {
+        String trimmed = input.trim();
+
+        DateTimeFormatter[] dateTimeFormatters = new DateTimeFormatter[] {
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HHmm"),
+            DateTimeFormatter.ISO_LOCAL_DATE_TIME
+        };
+
+        for (DateTimeFormatter formatter : dateTimeFormatters) {
+            try {
+                LocalDateTime ldt = LocalDateTime.parse(trimmed, formatter);
+                return new ParsedDateTime(ldt, true);
+            } catch (DateTimeParseException ignored) {
+                // Try next formatter
+            }
+        }
+
+        try {
+            LocalDate ld = LocalDate.parse(trimmed);
+            return new ParsedDateTime(ld.atStartOfDay(), false);
+        } catch (DateTimeParseException ignored) {
+            // Not a date-only string either
+        }
+
+        throw new DaveCommandException(
+                "NEGATIVE! Date must be in yyyy-MM-dd or yyyy-MM-dd HH:mm format (e.g., 2019-10-15 or 2005-12-22 16:00)");
+    }
+
+    /**
+     * Represents a parsed date and optional time.
+     */
+    private static class ParsedDateTime {
+
+        /** Parsed date and time value. */
+        private final LocalDateTime dateTime;
+        /** Indicates whether time of day was explicitly specified. */
+        private final boolean hasTime;
+
+        /**
+         * Constructs a ParsedDateTime with the specified date-time and time presence flag.
+         *
+         * @param dateTime Parsed LocalDateTime object.
+         * @param hasTime True if time was specified, false if date only.
+         */
+        ParsedDateTime(LocalDateTime dateTime, boolean hasTime) {
+            this.dateTime = dateTime;
+            this.hasTime = hasTime;
+        }
+
+        /**
+         * Returns the parsed date and time value.
+         *
+         * @return Parsed LocalDateTime object.
+         */
+        public LocalDateTime getDateTime() {
+            return this.dateTime;
+        }
+
+        /**
+         * Returns whether time of day was explicitly specified.
+         *
+         * @return True if time was specified, false otherwise.
+         */
+        public boolean hasTime() {
+            return this.hasTime;
         }
     }
 }
