@@ -1,5 +1,7 @@
+package dave.task;
+
 /**
- * Represents a todo task without any date or time constraints.
+ * Represents a simple todo task without any date or time constraints.
  */
 public class Todo extends Task {
 
@@ -8,17 +10,17 @@ public class Todo extends Task {
      *
      * @param description Description of the todo task.
      */
-    Todo(String description) {
+    public Todo(String description) {
         super(description);
     }
 
     @Override
     public String toFileFormat() {
-        return String.format("T | %d | %s", super.getDone() ? 1 : 0, super.getDescription());
+        return String.format("T | %d | %s", this.getDone() ? 1 : 0, this.getDescription());
     }
 
     @Override
     public String toString() {
-        return String.format("[T]%s", super.toString());
+        return "[T]" + super.toString();
     }
 }
