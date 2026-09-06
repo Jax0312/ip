@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-
 /**
  * Represents the main entry point for the Dave chatbot application.
  * Manages user interactions, command execution, and task persistence.
@@ -14,7 +12,7 @@ public class Dave {
     /** Storage handler responsible for loading and saving tasks on disk. */
     private static Storage storage = new Storage(DATA_FILE_PATH);
     /** List of tasks currently managed by the chatbot. */
-    static ArrayList<Task> tasks = new ArrayList<>();
+    private static TaskList tasks;
 
     /**
      * Starts the Dave chatbot application and processes user commands until exit.
@@ -23,10 +21,10 @@ public class Dave {
      */
     public static void main(String[] args) {
         try {
-            tasks = storage.load();
+            tasks = new TaskList(storage.load());
         } catch (DaveCommandException e) {
             ui.showLoadingError(e.getMessage());
-            tasks = new ArrayList<>();
+            tasks = new TaskList();
         }
 
         ui.showWelcome();
@@ -86,13 +84,14 @@ public class Dave {
      * @param userIn User input containing the index of the task to be removed.
      */
     private static void deleteTask(String userIn) {
-        int itemNumber = Integer.parseInt(userIn);
-        if (itemNumber < 1 || itemNumber > tasks.size()) {
-            ui.showError("Wrong number!");
-            return;
+        int itemNumber;
+        try {
+            itemNumber = Integer.parseInt(userIn);
+        } catch (NumberFormatException e) {
+            throw new DaveCommandException("Wrong number!");
         }
 
-        Task removedTask = tasks.remove(itemNumber - 1);
+        Task removedTask = tasks.delete(itemNumber - 1);
         saveTasks();
         ui.showTaskDeleted(removedTask);
     }
@@ -104,14 +103,14 @@ public class Dave {
      * @param isComplete True if the task should be marked as completed, false otherwise.
      */
     private static void updateTaskStatus(String userIn, boolean isComplete) {
-        int itemNumber = Integer.parseInt(userIn);
-        if (itemNumber < 1 || itemNumber > tasks.size()) {
-            ui.showError("Wrong number!");
-            return;
+        int itemNumber;
+        try {
+            itemNumber = Integer.parseInt(userIn);
+        } catch (NumberFormatException e) {
+            throw new DaveCommandException("Wrong number!");
         }
 
-        Task task = tasks.get(itemNumber - 1);
-        task.setDone(isComplete);
+        Task task = tasks.setDone(itemNumber - 1, isComplete);
         saveTasks();
         ui.showTaskStatusUpdated(task, isComplete);
     }
@@ -120,7 +119,7 @@ public class Dave {
      * Prints all tasks currently stored in the task list.
      */
     private static void listTask() {
-        ui.showTaskList(tasks);
+        ui.showTaskList(tasks.asList());
     }
 
     /**
@@ -199,7 +198,7 @@ public class Dave {
      */
     private static void saveTasks() {
         try {
-            storage.save(tasks);
+            storage.save(tasks.asList());
         } catch (DaveCommandException e) {
             ui.showSavingError(e.getMessage());
         }
