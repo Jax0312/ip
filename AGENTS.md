@@ -34,6 +34,19 @@ Use lightweight tags unless the user requests an annotated tag.
 When proposing or creating a commit message, include enough detail to explain the rationale for the change.
 Do not commit or push unless explicitly asked.
 
+## Coding Standards
+
+* Strictly adhere to the project-specific skill `seedu-java-coding-standard` (based on [SE-EDU Java Coding Standard: Basic + Intermediate](https://se-education.org/guides/conventions/java/intermediate.html)) for all code in this project.
+* Key conventions to enforce:
+  * **Naming**: PascalCase for types/enums, camelCase for methods and variables, SCREAMING_SNAKE_CASE for constants, and three-part `featureUnderTest_testScenario_expectedBehavior()` format for unit test methods.
+  * **Booleans**: Variables and getter methods must sound like booleans with prefixes such as `is`, `has` (e.g., `isDone()`, `hasTime()`). Setters must be of the form `void setFound(boolean isFound)` / `void setDone(boolean isDone)`.
+  * **Collections**: Plural nouns for variables holding collections or arrays (e.g., `tasks`, `lines`).
+  * **Layout**: 4-space indentation, max 120 chars line limit (soft limit 110 chars), K&R Egyptian brackets, all loop and conditional bodies enclosed in `{ }` on new lines.
+  * **Switch statements**: Switch cases aligned cleanly, explicit `// Fallthrough` comment for fall-through cases.
+  * **Imports**: Explicit imports only (no wildcard `*` imports), consistent ordering.
+  * **Types**: Array specifiers attached to type (`String[] args`, not `String args[]`).
+  * **Javadocs**: Descriptive header comments for all classes and public methods starting with 3rd-person singular verbs (`Returns ...`, `Adds ...`, `Parses ...`) with trailing punctuation for parameter/tag descriptions.
+
 ## Testing and Test Coverage
 
 * **Test coverage target**: Maintain a test coverage target of ~50% across candidate methods, focusing JUnit tests on the top ~50% highest-value methods (prioritizing complex, core, or critical business logic over trivial boilerplate).
