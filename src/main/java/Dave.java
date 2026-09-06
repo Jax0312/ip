@@ -1,13 +1,4 @@
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Represents the main entry point for the Dave chatbot application.
@@ -15,13 +6,15 @@ import java.util.List;
  */
 public class Dave {
 
+    /** Path to the data file used for persistent storage. */
+    private static final String DATA_FILE_PATH = "data/dave.txt";
+
     /** User interface handler responsible for all input and output. */
     private static Ui ui = new Ui();
+    /** Storage handler responsible for loading and saving tasks on disk. */
+    private static Storage storage = new Storage(DATA_FILE_PATH);
     /** List of tasks currently managed by the chatbot. */
     static ArrayList<Task> tasks = new ArrayList<>();
-
-    /** Path to the data file used for persistent storage. */
-    static final Path DATA_FILE_PATH = Paths.get("data", "dave.txt");
 
     /**
      * Starts the Dave chatbot application and processes user commands until exit.
@@ -29,7 +22,13 @@ public class Dave {
      * @param args Command line arguments.
      */
     public static void main(String[] args) {
-        tasks = loadList();
+        try {
+            tasks = storage.load();
+        } catch (DaveCommandException e) {
+            ui.showLoadingError(e.getMessage());
+            tasks = new ArrayList<>();
+        }
+
         ui.showWelcome();
         boolean isRunning = true;
 
@@ -94,7 +93,7 @@ public class Dave {
         }
 
         Task removedTask = tasks.remove(itemNumber - 1);
-        saveList();
+        saveTasks();
         ui.showTaskDeleted(removedTask);
     }
 
@@ -113,7 +112,7 @@ public class Dave {
 
         Task task = tasks.get(itemNumber - 1);
         task.setDone(isComplete);
-        saveList();
+        saveTasks();
         ui.showTaskStatusUpdated(task, isComplete);
     }
 
@@ -139,7 +138,7 @@ public class Dave {
             throw new DaveCommandException("NEGATIVE! The description of a deadline cannot be empty");
         }
 
-        ParsedDateTime parsed = parseDateTime(attributes[1]);
+        ParsedDateTime parsed = DateTimeParser.parse(attributes[1]);
         addTask(new Deadline(attributes[0].trim(), parsed.getDateTime(), parsed.hasTime()));
     }
 
@@ -163,8 +162,8 @@ public class Dave {
             throw new DaveCommandException("NEGATIVE! An event requires /from [time] and /to [time]");
         }
 
-        ParsedDateTime fromParsed = parseDateTime(fromTo[0]);
-        ParsedDateTime toParsed = parseDateTime(fromTo[1]);
+        ParsedDateTime fromParsed = DateTimeParser.parse(fromTo[0]);
+        ParsedDateTime toParsed = DateTimeParser.parse(fromTo[1]);
 
         addTask(new Event(attributes[0].trim(),
                 fromParsed.getDateTime(), fromParsed.hasTime(),
@@ -191,160 +190,18 @@ public class Dave {
      */
     private static void addTask(Task task) {
         tasks.add(task);
-        saveList();
+        saveTasks();
         ui.showTaskAdded(task);
     }
 
     /**
-     * Loads tasks from the persistent storage file into a list of tasks.
-     *
-     * @return List of tasks loaded from the storage file, or an empty list if the file is missing.
+     * Saves the current list of tasks to persistent storage via the storage handler.
      */
-    private static ArrayList<Task> loadList() {
-        ArrayList<Task> loadedTasks = new ArrayList<>();
-        if (!Files.exists(DATA_FILE_PATH)) {
-            return loadedTasks;
-        }
-
+    private static void saveTasks() {
         try {
-            List<String> lines = Files.readAllLines(DATA_FILE_PATH);
-            for (String line : lines) {
-                if (line.trim().isEmpty()) {
-                    continue;
-                }
-                String[] parts = line.split(" \\| ");
-                String type = parts[0];
-                boolean isDone = parts[1].equals("1");
-                Task task;
-
-                try {
-                    switch (type) {
-                        case "T":
-                            task = new Todo(parts[2]);
-                            break;
-                        case "D":
-                            ParsedDateTime deadlineBy = parseDateTime(parts[3]);
-                            task = new Deadline(parts[2], deadlineBy.getDateTime(), deadlineBy.hasTime());
-                            break;
-                        case "E":
-                            ParsedDateTime eventFrom = parseDateTime(parts[3]);
-                            ParsedDateTime eventTo = parseDateTime(parts[4]);
-                            task = new Event(parts[2],
-                                    eventFrom.getDateTime(), eventFrom.hasTime(),
-                                    eventTo.getDateTime(), eventTo.hasTime());
-                            break;
-                        default:
-                            continue;
-                    }
-                } catch (DaveCommandException e) {
-                    ui.showError("Warning: Skipping task with invalid date format: " + line);
-                    continue;
-                }
-
-                task.setDone(isDone);
-                loadedTasks.add(task);
-            }
-        } catch (IOException e) {
-            ui.showLoadingError(e.getMessage());
-        }
-
-        return loadedTasks;
-    }
-
-    /**
-     * Saves the current list of tasks to the persistent storage file.
-     */
-    private static void saveList() {
-        try {
-            if (DATA_FILE_PATH.getParent() != null && !Files.exists(DATA_FILE_PATH.getParent())) {
-                Files.createDirectories(DATA_FILE_PATH.getParent());
-            }
-
-            List<String> lines = new ArrayList<>();
-            for (Task task : tasks) {
-                lines.add(task.toFileFormat());
-            }
-
-            Files.write(DATA_FILE_PATH, lines);
-        } catch (IOException e) {
+            storage.save(tasks);
+        } catch (DaveCommandException e) {
             ui.showSavingError(e.getMessage());
-        }
-    }
-
-    /**
-     * Parses a date or date-time string into a ParsedDateTime object.
-     * Supports formats such as yyyy-MM-dd HH:mm, yyyy-MM-dd HHmm, and yyyy-MM-dd.
-     *
-     * @param input Raw date or date-time string from user input or file storage.
-     * @return Parsed date-time along with a flag indicating if time was specified.
-     * @throws DaveCommandException If the string cannot be parsed using any supported format.
-     */
-    private static ParsedDateTime parseDateTime(String input) {
-        String trimmed = input.trim();
-
-        DateTimeFormatter[] dateTimeFormatters = new DateTimeFormatter[] {
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HHmm"),
-            DateTimeFormatter.ISO_LOCAL_DATE_TIME
-        };
-
-        for (DateTimeFormatter formatter : dateTimeFormatters) {
-            try {
-                LocalDateTime ldt = LocalDateTime.parse(trimmed, formatter);
-                return new ParsedDateTime(ldt, true);
-            } catch (DateTimeParseException ignored) {
-                // Try next formatter
-            }
-        }
-
-        try {
-            LocalDate ld = LocalDate.parse(trimmed);
-            return new ParsedDateTime(ld.atStartOfDay(), false);
-        } catch (DateTimeParseException ignored) {
-            // Not a date-only string either
-        }
-
-        throw new DaveCommandException(
-                "NEGATIVE! Date must be in yyyy-MM-dd or yyyy-MM-dd HH:mm format (e.g., 2019-10-15 or 2005-12-22 16:00)");
-    }
-
-    /**
-     * Represents a parsed date and optional time.
-     */
-    private static class ParsedDateTime {
-
-        /** Parsed date and time value. */
-        private final LocalDateTime dateTime;
-        /** Indicates whether time of day was explicitly specified. */
-        private final boolean hasTime;
-
-        /**
-         * Constructs a ParsedDateTime with the specified date-time and time presence flag.
-         *
-         * @param dateTime Parsed LocalDateTime object.
-         * @param hasTime True if time was specified, false if date only.
-         */
-        ParsedDateTime(LocalDateTime dateTime, boolean hasTime) {
-            this.dateTime = dateTime;
-            this.hasTime = hasTime;
-        }
-
-        /**
-         * Returns the parsed date and time value.
-         *
-         * @return Parsed LocalDateTime object.
-         */
-        public LocalDateTime getDateTime() {
-            return this.dateTime;
-        }
-
-        /**
-         * Returns whether time of day was explicitly specified.
-         *
-         * @return True if time was specified, false otherwise.
-         */
-        public boolean hasTime() {
-            return this.hasTime;
         }
     }
 }
