@@ -10,6 +10,11 @@ public class Event extends Task{
     }
 
     @Override
+    public String toFileFormat() {
+        return String.format("E | %d | %s | %s | %s", super.getMark() ? 1 : 0, super.getDescription(), from, to);
+    }
+
+    @Override
     public String toString() {
         return String.format("[E]%s (from: %s to: %s)", super.toString(), this.from, this.to);
     }

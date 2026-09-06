@@ -1,4 +1,9 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Dave {
@@ -7,19 +12,21 @@ public class Dave {
     static String SEPARATOR = "____________________________________________________________";
     static ArrayList<Task> tasks = new ArrayList<>();
 
-    public static void main(String[] args) {
+    static final Path DATA_FILE_PATH = Paths.get("data", "dave.txt");
 
+    public static void main(String[] args) {
+        tasks = loadList();
         sendGreetings();
         Scanner scanner = new Scanner(System.in);
         boolean isRunning = true;
 
         while (isRunning) {
             try {
-            String userIn = scanner.nextLine().trim();
+                String userIn = scanner.nextLine().trim();
 
-            if (userIn.isEmpty()) {
-                continue;
-            }
+                if (userIn.isEmpty()) {
+                    continue;
+                }
                 String[] parts = userIn.split("\\s+", 2);
                 Command command = Command.from(parts[0]);
 
@@ -74,6 +81,7 @@ public class Dave {
         }
 
         Task removedTask = tasks.remove(itemNumber - 1);
+        saveList();
         System.out.println(SEPARATOR);
         System.out.println("Affirmative! This task was removed:");
         System.out.printf("    %s\n", removedTask);
@@ -81,7 +89,6 @@ public class Dave {
     }
 
     private static void updateTaskStatus(String userIn, boolean complete) {
-        // assume correct input format
         int itemNumber = Integer.parseInt(userIn);
         if (itemNumber < 1 || itemNumber > tasks.size()) {
             System.out.println(SEPARATOR);
@@ -92,6 +99,7 @@ public class Dave {
 
         Task task = tasks.get(itemNumber - 1);
         task.setMark(complete);
+        saveList();
         System.out.println(SEPARATOR);
         if (complete) {
             System.out.println("Another one down!");
@@ -139,6 +147,7 @@ public class Dave {
 
     private static void addTask(Task task) {
         tasks.add(task);
+        saveList();
         System.out.println(SEPARATOR);
         System.out.printf("added: %s\n", task);
         System.out.println(SEPARATOR);
@@ -162,5 +171,67 @@ public class Dave {
         System.out.println(SEPARATOR);
         System.out.println("The wind calls. Farewell!");
         System.out.println(SEPARATOR);
+    }
+
+    private static ArrayList<Task> loadList() {
+        ArrayList<Task> loadedTasks = new ArrayList<>();
+        if (!Files.exists(DATA_FILE_PATH)) {
+            return loadedTasks;
+        }
+
+        try {
+            List<String> lines = Files.readAllLines(DATA_FILE_PATH);
+            for (String line : lines) {
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+                String[] parts = line.split(" \\| ");
+                String type = parts[0];
+                boolean isDone = parts[1].equals("1");
+                Task task;
+
+                switch (type) {
+                    case "T":
+                        task = new Todo(parts[2]);
+                        break;
+                    case "D":
+                        task = new Deadline(parts[2], parts[3]);
+                        break;
+                    case "E":
+                        task = new Event(parts[2], parts[3], parts[4]);
+                        break;
+                    default:
+                        continue;
+                }
+
+                task.setMark(isDone);
+                loadedTasks.add(task);
+            }
+        } catch (IOException e) {
+            System.out.println(SEPARATOR);
+            System.out.println("Warning: Unable to load tasks from disk: " + e.getMessage());
+            System.out.println(SEPARATOR);
+        }
+
+        return loadedTasks;
+    }
+
+    private static void saveList() {
+        try {
+            if (DATA_FILE_PATH.getParent() != null && !Files.exists(DATA_FILE_PATH.getParent())) {
+                Files.createDirectories(DATA_FILE_PATH.getParent());
+            }
+
+            List<String> lines = new ArrayList<>();
+            for (Task task : tasks) {
+                lines.add(task.toFileFormat());
+            }
+
+            Files.write(DATA_FILE_PATH, lines);
+        } catch (IOException e) {
+            System.out.println(SEPARATOR);
+            System.out.println("Warning: Unable to save tasks to disk: " + e.getMessage());
+            System.out.println(SEPARATOR);
+        }
     }
 }

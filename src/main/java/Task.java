@@ -1,4 +1,4 @@
-public class Task {
+public abstract class Task {
     private final String description;
     private boolean isMark;
 
@@ -8,6 +8,15 @@ public class Task {
 
     public void setMark(boolean isMark) {
         this.isMark = isMark;
+    }
+    public abstract String toFileFormat();
+
+    public boolean getMark() {
+        return this.isMark;
+    }
+
+    public String getDescription() {
+        return this.description;
     }
 
     @Override

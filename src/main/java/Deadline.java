@@ -8,6 +8,11 @@ public class Deadline extends Task {
     }
 
     @Override
+    public String toFileFormat() {
+        return String.format("D | %d | %s | %s", super.getMark() ? 1 : 0, super.getDescription(), by);
+    }
+
+    @Override
     public String toString() {
         return String.format("[D]%s (by: %s)", super.toString(), this.by);
     }
