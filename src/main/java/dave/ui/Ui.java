@@ -1,5 +1,9 @@
+package dave.ui;
+
 import java.util.List;
 import java.util.Scanner;
+
+import dave.task.Task;
 
 /**
  * Handles user interactions for the Dave chatbot application.

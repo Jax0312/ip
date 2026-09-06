@@ -1,3 +1,13 @@
+package dave;
+
+import dave.command.Command;
+import dave.exception.DaveCommandException;
+import dave.parser.Parser;
+import dave.storage.Storage;
+import dave.task.Task;
+import dave.task.TaskList;
+import dave.ui.Ui;
+
 /**
  * Represents the main entry point for the Dave chatbot application.
  * Manages user interactions, command execution, and task persistence.
