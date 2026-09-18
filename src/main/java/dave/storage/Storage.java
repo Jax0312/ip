@@ -58,22 +58,22 @@ public class Storage {
 
                 try {
                     switch (type) {
-                    case "T":
-                        task = new Todo(parts[2]);
-                        break;
-                    case "D":
-                        ParsedDateTime deadlineBy = DateTimeParser.parse(parts[3]);
-                        task = new Deadline(parts[2], deadlineBy.getDateTime(), deadlineBy.hasTime());
-                        break;
-                    case "E":
-                        ParsedDateTime eventFrom = DateTimeParser.parse(parts[3]);
-                        ParsedDateTime eventTo = DateTimeParser.parse(parts[4]);
-                        task = new Event(parts[2],
-                                eventFrom.getDateTime(), eventFrom.hasTime(),
-                                eventTo.getDateTime(), eventTo.hasTime());
-                        break;
-                    default:
-                        continue;
+                        case "T":
+                            task = new Todo(parts[2]);
+                            break;
+                        case "D":
+                            ParsedDateTime deadlineBy = DateTimeParser.parse(parts[3]);
+                            task = new Deadline(parts[2], deadlineBy.getDateTime(), deadlineBy.hasTime());
+                            break;
+                        case "E":
+                            ParsedDateTime eventFrom = DateTimeParser.parse(parts[3]);
+                            ParsedDateTime eventTo = DateTimeParser.parse(parts[4]);
+                            task = new Event(parts[2],
+                                    eventFrom.getDateTime(), eventFrom.hasTime(),
+                                    eventTo.getDateTime(), eventTo.hasTime());
+                            break;
+                        default:
+                            continue;
                     }
                 } catch (DaveCommandException e) {
                     // Skip corrupted or unparseable task entry
