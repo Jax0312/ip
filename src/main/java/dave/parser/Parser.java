@@ -11,6 +11,13 @@ import dave.task.Todo;
  */
 public class Parser {
 
+    /** Delimiter separating deadline task description from due date-time. */
+    private static final String DEADLINE_DELIMITER = " /by ";
+    /** Delimiter separating event task description from start date-time. */
+    private static final String EVENT_FROM_DELIMITER = " /from ";
+    /** Delimiter separating event start date-time from end date-time. */
+    private static final String EVENT_TO_DELIMITER = " /to ";
+
     /**
      * Parses the command type from the full user input string.
      *
@@ -55,7 +62,7 @@ public class Parser {
      * @throws DaveCommandException If delimiters are missing, description is empty, or date format is invalid.
      */
     public static Deadline parseDeadline(String arguments) {
-        String[] attributes = arguments.split(" /by ");
+        String[] attributes = arguments.split(DEADLINE_DELIMITER);
         if (attributes.length < 2) {
             throw new DaveCommandException("NEGATIVE! A deadline requires /by [time]");
         }
@@ -75,7 +82,7 @@ public class Parser {
      * @throws DaveCommandException If delimiters are missing, description is empty, or date format is invalid.
      */
     public static Event parseEvent(String arguments) {
-        String[] attributes = arguments.split(" /from ");
+        String[] attributes = arguments.split(EVENT_FROM_DELIMITER);
         if (attributes.length < 2) {
             throw new DaveCommandException("NEGATIVE! An event requires /from [time] and /to [time]");
         }
@@ -83,7 +90,7 @@ public class Parser {
             throw new DaveCommandException("NEGATIVE! The description of an event cannot be empty");
         }
 
-        String[] fromTo = attributes[1].split(" /to ");
+        String[] fromTo = attributes[1].split(EVENT_TO_DELIMITER);
         if (fromTo.length < 2) {
             throw new DaveCommandException("NEGATIVE! An event requires /from [time] and /to [time]");
         }
