@@ -30,6 +30,7 @@ public class Storage {
      * @param filePath Relative or absolute path to the data file.
      */
     public Storage(String filePath) {
+        assert filePath != null && !filePath.trim().isEmpty() : "File path cannot be null or empty";
         this.filePath = Paths.get(filePath);
     }
 
@@ -51,37 +52,10 @@ public class Storage {
                 if (line.trim().isEmpty()) {
                     continue;
                 }
-                String[] parts = line.split(" \\| ");
-                String type = parts[0];
-                boolean isDone = parts[1].equals("1");
-                Task task;
-
-                try {
-                    switch (type) {
-                        case "T":
-                            task = new Todo(parts[2]);
-                            break;
-                        case "D":
-                            ParsedDateTime deadlineBy = DateTimeParser.parse(parts[3]);
-                            task = new Deadline(parts[2], deadlineBy.getDateTime(), deadlineBy.hasTime());
-                            break;
-                        case "E":
-                            ParsedDateTime eventFrom = DateTimeParser.parse(parts[3]);
-                            ParsedDateTime eventTo = DateTimeParser.parse(parts[4]);
-                            task = new Event(parts[2],
-                                    eventFrom.getDateTime(), eventFrom.hasTime(),
-                                    eventTo.getDateTime(), eventTo.hasTime());
-                            break;
-                        default:
-                            continue;
-                    }
-                } catch (DaveCommandException e) {
-                    // Skip corrupted or unparseable task entry
-                    continue;
+                Task task = parseLineToTask(line);
+                if (task != null) {
+                    loadedTasks.add(task);
                 }
-
-                task.setDone(isDone);
-                loadedTasks.add(task);
             }
         } catch (IOException e) {
             throw new DaveCommandException("Unable to load tasks from disk: " + e.getMessage());
@@ -91,12 +65,66 @@ public class Storage {
     }
 
     /**
+     * Parses a single serialized line from the data file into a Task object.
+     * Returns null if the line cannot be parsed or contains unrecognized task data.
+     *
+     * @param line Serialized task line from the storage file.
+     * @return Task parsed from line, or null if line is unparseable or corrupted.
+     */
+    private Task parseLineToTask(String line) {
+        String[] parts = line.split(" \\| ");
+        if (parts.length < 3) {
+            return null;
+        }
+
+        String type = parts[0];
+        boolean isDone = parts[1].equals("1");
+
+        try {
+            Task task = createTaskFromParts(type, parts);
+            if (task != null) {
+                task.setDone(isDone);
+            }
+            return task;
+        } catch (DaveCommandException | ArrayIndexOutOfBoundsException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Instantiates the appropriate Task subtype from split line parts.
+     *
+     * @param type Task type marker ("T", "D", or "E").
+     * @param parts Split parts of the serialized task line.
+     * @return Task instance, or null if type is unrecognized.
+     * @throws DaveCommandException If date parsing fails for deadline or event.
+     */
+    private Task createTaskFromParts(String type, String[] parts) throws DaveCommandException {
+        switch (type) {
+            case "T":
+                return new Todo(parts[2]);
+            case "D":
+                ParsedDateTime deadlineBy = DateTimeParser.parse(parts[3]);
+                return new Deadline(parts[2], deadlineBy.getDateTime(), deadlineBy.hasTime());
+            case "E":
+                ParsedDateTime eventFrom = DateTimeParser.parse(parts[3]);
+                ParsedDateTime eventTo = DateTimeParser.parse(parts[4]);
+                return new Event(parts[2],
+                        eventFrom.getDateTime(), eventFrom.hasTime(),
+                        eventTo.getDateTime(), eventTo.hasTime());
+            default:
+                return null;
+        }
+    }
+
+    /**
      * Saves the provided list of tasks to the storage file.
      *
      * @param tasks List of tasks to save to disk.
      * @throws DaveCommandException If an I/O error occurs while writing to the file.
      */
     public void save(List<Task> tasks) throws DaveCommandException {
+        assert tasks != null : "Task list to save cannot be null";
         try {
             if (this.filePath.getParent() != null && !Files.exists(this.filePath.getParent())) {
                 Files.createDirectories(this.filePath.getParent());
