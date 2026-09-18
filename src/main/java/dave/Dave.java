@@ -41,6 +41,8 @@ public class Dave {
      * @param filePath Relative or absolute path to the data file.
      */
     public Dave(String filePath) {
+        assert filePath != null && !filePath.trim().isEmpty() : "File path for Dave storage cannot be null or empty";
+
         this.ui = new Ui();
         this.storage = new Storage(filePath);
         this.isExit = false;
@@ -50,6 +52,8 @@ public class Dave {
             this.ui.showLoadingError(e.getMessage());
             this.tasks = new TaskList();
         }
+
+        assert this.tasks != null : "TaskList must be initialized after constructor execution";
     }
 
     /**
@@ -81,9 +85,13 @@ public class Dave {
             return "";
         }
 
+        assert this.tasks != null : "TaskList must be initialized before processing any command";
+
         try {
             Command command = Parser.parseCommand(input);
             String arguments = Parser.parseArguments(input);
+
+            assert command != null : "Parser.parseCommand must always return a valid Command enum";
 
             switch (command) {
                 case BYE:
@@ -142,6 +150,7 @@ public class Dave {
      */
     private String findTasks(String arguments) throws DaveCommandException {
         String keyword = Parser.parseFind(arguments);
+        assert keyword != null && !keyword.isEmpty() : "Parser.parseFind must return non-empty keyword";
         ArrayList<Task> matchingTasks = this.tasks.find(keyword);
         return this.ui.formatMatchingTasks(matchingTasks);
     }
@@ -155,7 +164,9 @@ public class Dave {
      */
     private String deleteTask(String arguments) throws DaveCommandException {
         int index = Parser.parseIndex(arguments);
+        assert index >= 0 : "Parser.parseIndex must yield a non-negative index value";
         Task removedTask = this.tasks.delete(index);
+        assert removedTask != null : "TaskList.delete must return the removed task";
         saveTasks();
         return this.ui.formatTaskDeleted(removedTask);
     }
@@ -170,7 +181,10 @@ public class Dave {
      */
     private String updateTaskStatus(String arguments, boolean isComplete) throws DaveCommandException {
         int index = Parser.parseIndex(arguments);
+        assert index >= 0 : "Parser.parseIndex must yield a non-negative index value";
         Task task = this.tasks.setDone(index, isComplete);
+        assert task != null : "TaskList.setDone must return the updated task";
+        assert task.isDone() == isComplete : "Task completion status must match the requested status";
         saveTasks();
         return this.ui.formatTaskStatusUpdated(task, isComplete);
     }
@@ -183,7 +197,10 @@ public class Dave {
      * @throws DaveCommandException If saving tasks to persistent storage fails.
      */
     private String addTask(Task task) throws DaveCommandException {
+        assert task != null : "Cannot add a null task to TaskList";
+        int initialSize = this.tasks.size();
         this.tasks.add(task);
+        assert this.tasks.size() == initialSize + 1 : "TaskList size must increment by 1 after adding task";
         saveTasks();
         return this.ui.formatTaskAdded(task);
     }
@@ -194,6 +211,8 @@ public class Dave {
      * @throws DaveCommandException If saving tasks fails.
      */
     private void saveTasks() throws DaveCommandException {
+        assert this.storage != null : "Storage handler must be initialized to save tasks";
+        assert this.tasks != null : "TaskList must be initialized to save tasks";
         this.storage.save(this.tasks.asList());
     }
 
