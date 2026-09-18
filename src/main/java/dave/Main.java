@@ -1,8 +1,12 @@
 package dave;
 
+import java.io.IOException;
+
+import dave.gui.MainWindow;
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
 /**
@@ -10,12 +14,21 @@ import javafx.stage.Stage;
  */
 public class Main extends Application {
 
+    private final Dave dave = new Dave();
+
     @Override
     public void start(Stage stage) {
-        Label helloWorld = new Label("Hello World!"); // Creating a new Label control
-        Scene scene = new Scene(helloWorld); // Setting the scene to be our Label
-
-        stage.setScene(scene); // Setting the stage to show our scene
-        stage.show(); // Render the stage.
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("/view/MainWindow.fxml"));
+            AnchorPane anchorPane = fxmlLoader.load();
+            Scene scene = new Scene(anchorPane);
+            stage.setScene(scene);
+            stage.setTitle("Dave - Personal Task Assistant");
+            stage.setResizable(false);
+            fxmlLoader.<MainWindow>getController().setDave(this.dave);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

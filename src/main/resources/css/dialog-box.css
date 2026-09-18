@@ -1,0 +1,28 @@
+.dialog-box {
+    -fx-spacing: 10px;
+    -fx-alignment: center-right;
+}
+
+.label {
+    -fx-background-color: #3d405b;
+    -fx-background-radius: 12px;
+    -fx-padding: 10px 14px;
+    -fx-text-fill: #edf2f4;
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 13px;
+    -fx-line-spacing: 2px;
+}
+
+.reply-label {
+    -fx-background-color: #1b4965;
+    -fx-text-fill: #edf2f4;
+}
+
+.error-label {
+    -fx-background-color: #780000;
+    -fx-text-fill: #fdf0d5;
+}
+
+.image-view {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 4, 0, 0, 2);
+}
