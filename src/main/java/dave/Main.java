@@ -5,6 +5,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
+/**
+ * Main application class for the Dave GUI.
+ */
 public class Main extends Application {
 
     @Override
