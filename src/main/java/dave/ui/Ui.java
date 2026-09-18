@@ -18,7 +18,7 @@ public class Ui {
     /** Welcome banner displayed upon application start. */
     private static final String BANNER = """
             ____
-            |  _ \\  __ ___   _____\s
+            |  _ \\  __ ___   _____\\s
             | | | |/ _` \\ \\ / / _ \\
             | |_| | (_| |\\ V /  __/
             |____/ \\__,_| \\_/ \\___|
@@ -65,7 +65,18 @@ public class Ui {
      */
     public void showGoodbye() {
         showLine();
-        System.out.println("The wind calls. Farewell!");
+        System.out.println(formatGoodbye());
+        showLine();
+    }
+
+    /**
+     * Displays a message enclosed in horizontal line separators.
+     *
+     * @param message Message to be displayed.
+     */
+    public void showMessage(String message) {
+        showLine();
+        System.out.println(message);
         showLine();
     }
 
@@ -75,9 +86,7 @@ public class Ui {
      * @param message Error or status message to be displayed.
      */
     public void showError(String message) {
-        showLine();
-        System.out.println(message);
-        showLine();
+        showMessage(message);
     }
 
     /**
@@ -86,9 +95,7 @@ public class Ui {
      * @param message Detailed error description.
      */
     public void showLoadingError(String message) {
-        showLine();
-        System.out.println("Warning: Unable to load tasks from disk: " + message);
-        showLine();
+        showMessage("Warning: Unable to load tasks from disk: " + message);
     }
 
     /**
@@ -97,9 +104,7 @@ public class Ui {
      * @param message Detailed error description.
      */
     public void showSavingError(String message) {
-        showLine();
-        System.out.println("Warning: Unable to save tasks to disk: " + message);
-        showLine();
+        showMessage("Warning: Unable to save tasks to disk: " + message);
     }
 
     /**
@@ -108,9 +113,7 @@ public class Ui {
      * @param task Task that was added.
      */
     public void showTaskAdded(Task task) {
-        showLine();
-        System.out.printf("added: %s\n", task);
-        showLine();
+        showMessage(formatTaskAdded(task));
     }
 
     /**
@@ -119,10 +122,7 @@ public class Ui {
      * @param task Task that was removed.
      */
     public void showTaskDeleted(Task task) {
-        showLine();
-        System.out.println("Affirmative! This task was removed:");
-        System.out.printf("    %s\n", task);
-        showLine();
+        showMessage(formatTaskDeleted(task));
     }
 
     /**
@@ -132,14 +132,7 @@ public class Ui {
      * @param isComplete True if the task was marked completed, false if uncompleted.
      */
     public void showTaskStatusUpdated(Task task, boolean isComplete) {
-        showLine();
-        if (isComplete) {
-            System.out.println("Another one down!");
-        } else {
-            System.out.println("Negative progress...");
-        }
-        System.out.println(task);
-        showLine();
+        showMessage(formatTaskStatusUpdated(task, isComplete));
     }
 
     /**
@@ -167,5 +160,95 @@ public class Ui {
             System.out.printf("%d.%s\n", i, tasks.get(i - 1));
         }
         showLine();
+    }
+
+    /**
+     * Formats the welcome greeting message.
+     *
+     * @return Formatted welcome greeting string.
+     */
+    public String formatWelcome() {
+        return String.format("Hello! I'm %s.\nAt your service!", NAME);
+    }
+
+    /**
+     * Formats the farewell exit message.
+     *
+     * @return Formatted farewell message string.
+     */
+    public String formatGoodbye() {
+        return "The wind calls. Farewell!";
+    }
+
+    /**
+     * Formats confirmation that a task has been added to the task list.
+     *
+     * @param task Task that was added.
+     * @return Formatted task addition confirmation string.
+     */
+    public String formatTaskAdded(Task task) {
+        return String.format("added: %s", task);
+    }
+
+    /**
+     * Formats confirmation that a task has been removed from the task list.
+     *
+     * @param task Task that was removed.
+     * @return Formatted task removal confirmation string.
+     */
+    public String formatTaskDeleted(Task task) {
+        return String.format("Affirmative! This task was removed:\n    %s", task);
+    }
+
+    /**
+     * Formats confirmation that a task's status has been updated.
+     *
+     * @param task Task whose status changed.
+     * @param isComplete True if the task was marked completed, false if uncompleted.
+     * @return Formatted task status update string.
+     */
+    public String formatTaskStatusUpdated(Task task, boolean isComplete) {
+        String statusMessage = isComplete ? "Another one down!" : "Negative progress...";
+        return String.format("%s\n%s", statusMessage, task);
+    }
+
+    /**
+     * Formats the full list of tasks with 1-based indexing.
+     *
+     * @param tasks List of tasks to format.
+     * @return Formatted task list string.
+     */
+    public String formatTaskList(List<Task> tasks) {
+        if (tasks.isEmpty()) {
+            return "There are no tasks in your list.";
+        }
+        StringBuilder builder = new StringBuilder();
+        for (int i = 1; i <= tasks.size(); i++) {
+            builder.append(String.format("%d. %s", i, tasks.get(i - 1)));
+            if (i < tasks.size()) {
+                builder.append("\n");
+            }
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Formats matching tasks found by keyword search with 1-based indexing.
+     *
+     * @param tasks List of matching tasks to format.
+     * @return Formatted matching tasks string.
+     */
+    public String formatMatchingTasks(List<Task> tasks) {
+        if (tasks.isEmpty()) {
+            return "No matching tasks found in your list.";
+        }
+        StringBuilder builder = new StringBuilder("Here are the matching tasks in your list:\n");
+        for (int i = 1; i <= tasks.size(); i++) {
+            builder.append(String.format("%d.%s", i, tasks.get(i - 1)));
+            if (i < tasks.size()) {
+                builder.append("\n");
+            }
+        }
+        return builder.toString();
     }
 }
