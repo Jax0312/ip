@@ -37,6 +37,7 @@ public class MainWindow extends AnchorPane {
     @FXML
     public void initialize() {
         this.scrollPane.vvalueProperty().bind(this.dialogContainer.heightProperty());
+        this.dialogContainer.prefWidthProperty().bind(this.scrollPane.widthProperty());
         this.userImage = loadImageSafely("/images/DaUser.png");
         this.daveImage = loadImageSafely("/images/DaDave.png");
     }
@@ -82,9 +83,14 @@ public class MainWindow extends AnchorPane {
         }
 
         String response = this.dave.getResponse(input);
+        boolean isError = this.dave.isErrorResponse(response);
+        DialogBox daveBox = isError
+                ? DialogBox.getDaveErrorDialog(response, this.daveImage)
+                : DialogBox.getDaveDialog(response, this.daveImage);
+
         this.dialogContainer.getChildren().addAll(
                 DialogBox.getUserDialog(input, this.userImage),
-                DialogBox.getDaveDialog(response, this.daveImage)
+                daveBox
         );
         this.userInput.clear();
 

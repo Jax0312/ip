@@ -14,6 +14,11 @@ import javafx.stage.Stage;
  */
 public class Main extends Application {
 
+    /** Minimum allowable window width in pixels. */
+    private static final double MIN_WINDOW_WIDTH = 420.0;
+    /** Minimum allowable window height in pixels. */
+    private static final double MIN_WINDOW_HEIGHT = 550.0;
+
     private final Dave dave = new Dave();
 
     @Override
@@ -24,7 +29,9 @@ public class Main extends Application {
             Scene scene = new Scene(anchorPane);
             stage.setScene(scene);
             stage.setTitle("Dave - Personal Task Assistant");
-            stage.setResizable(false);
+            stage.setResizable(true);
+            stage.setMinWidth(MIN_WINDOW_WIDTH);
+            stage.setMinHeight(MIN_WINDOW_HEIGHT);
             fxmlLoader.<MainWindow>getController().setDave(this.dave);
             stage.show();
         } catch (IOException e) {

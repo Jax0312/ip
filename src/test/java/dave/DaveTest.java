@@ -160,4 +160,38 @@ public class DaveTest {
         String listResponse = newDave.getResponse("list");
         assertEquals("1. [D][ ] return book (by: Oct 03 2026)", listResponse);
     }
+
+    @Test
+    public void isErrorResponse_negativePrefix_returnsTrue() {
+        assertTrue(this.dave.isErrorResponse("NEGATIVE! The description of a todo cannot be empty"));
+    }
+
+    @Test
+    public void isErrorResponse_wrongNumber_returnsTrue() {
+        assertTrue(this.dave.isErrorResponse("Wrong number!"));
+    }
+
+    @Test
+    public void isErrorResponse_unknownCommandMessage_returnsTrue() {
+        assertTrue(this.dave.isErrorResponse("I'm afraid I cannot understand you"));
+    }
+
+    @Test
+    public void isErrorResponse_warningPrefix_returnsTrue() {
+        assertTrue(this.dave.isErrorResponse("Warning: Unable to load tasks from disk: File not found"));
+    }
+
+    @Test
+    public void isErrorResponse_successfulResponse_returnsFalse() {
+        assertFalse(this.dave.isErrorResponse("added: [T][ ] read book"));
+        assertFalse(this.dave.isErrorResponse("Another one down!\n[T][X] read book"));
+        assertFalse(this.dave.isErrorResponse("Affirmative! I've snoozed this task: ..."));
+    }
+
+    @Test
+    public void isErrorResponse_nullOrEmptyResponse_returnsFalse() {
+        assertFalse(this.dave.isErrorResponse(null));
+        assertFalse(this.dave.isErrorResponse(""));
+        assertFalse(this.dave.isErrorResponse("   "));
+    }
 }

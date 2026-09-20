@@ -76,6 +76,23 @@ public class Dave {
     }
 
     /**
+     * Determines whether the provided chatbot response represents an error message.
+     *
+     * @param response Chatbot response string to inspect.
+     * @return True if the response indicates an error or warning, false otherwise.
+     */
+    public boolean isErrorResponse(String response) {
+        if (response == null || response.trim().isEmpty()) {
+            return false;
+        }
+
+        return response.startsWith("NEGATIVE!")
+                || response.startsWith("Wrong number!")
+                || response.startsWith("Warning:")
+                || response.equals("I'm afraid I cannot understand you");
+    }
+
+    /**
      * Generates a response string for a given user command input.
      *
      * @param input Raw command input from the user.

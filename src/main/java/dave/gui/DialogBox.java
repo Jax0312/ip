@@ -13,6 +13,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.shape.Circle;
 
 /**
@@ -21,7 +22,9 @@ import javafx.scene.shape.Circle;
 public class DialogBox extends HBox {
 
     /** Radius in pixels for avatar clipping circles. */
-    private static final double AVATAR_RADIUS = 37.5;
+    private static final double AVATAR_RADIUS = 19.0;
+    /** Horizontal space reserved for avatar, padding, and spacing. */
+    private static final double HORIZONTAL_CHROME_PADDING = 75.0;
 
     @FXML
     private Label dialog;
@@ -44,8 +47,11 @@ public class DialogBox extends HBox {
             e.printStackTrace();
         }
 
-        setAlignment(Pos.CENTER_RIGHT);
+        setAlignment(Pos.TOP_RIGHT);
         this.dialog.setText(text);
+        this.dialog.setMinHeight(Region.USE_PREF_SIZE);
+        this.dialog.maxWidthProperty().bind(this.widthProperty().subtract(HORIZONTAL_CHROME_PADDING));
+
         if (img != null) {
             this.displayPicture.setImage(img);
             clipAvatar(img);
@@ -57,7 +63,6 @@ public class DialogBox extends HBox {
 
     /**
      * Clips the display picture as a circle centered on the avatar.
-     * If the avatar image is non-square, dynamically computes viewport/center to prevent clipping.
      *
      * @param img Avatar image to clip.
      */
@@ -73,8 +78,7 @@ public class DialogBox extends HBox {
         ObservableList<Node> tmp = FXCollections.observableArrayList(this.getChildren());
         Collections.reverse(tmp);
         getChildren().setAll(tmp);
-        setAlignment(Pos.CENTER_LEFT);
-        this.dialog.getStyleClass().add("reply-label");
+        setAlignment(Pos.TOP_LEFT);
     }
 
     /**
@@ -85,19 +89,52 @@ public class DialogBox extends HBox {
      * @return DialogBox configured for user input.
      */
     public static DialogBox getUserDialog(String text, Image img) {
-        return new DialogBox(text, img);
+        DialogBox db = new DialogBox(text, img);
+        db.getStyleClass().add("user-dialog");
+        db.dialog.getStyleClass().add("user-label");
+        return db;
     }
 
     /**
-     * Creates a dialog box representing Dave's response message.
+     * Creates a dialog box representing Dave's standard response message.
      *
      * @param text Text response from Dave.
      * @param img Avatar image of Dave.
      * @return DialogBox configured for Dave's response.
      */
     public static DialogBox getDaveDialog(String text, Image img) {
+        return getDaveDialog(text, img, false);
+    }
+
+    /**
+     * Creates a dialog box representing Dave's response message with optional error styling.
+     *
+     * @param text Text response from Dave.
+     * @param img Avatar image of Dave.
+     * @param isError True if the response indicates an error, false for normal output.
+     * @return DialogBox configured for Dave's response.
+     */
+    public static DialogBox getDaveDialog(String text, Image img, boolean isError) {
         DialogBox db = new DialogBox(text, img);
         db.flip();
+        db.getStyleClass().add("dave-dialog");
+        if (isError) {
+            db.getStyleClass().add("error-dialog");
+            db.dialog.getStyleClass().add("error-label");
+        } else {
+            db.dialog.getStyleClass().add("dave-label");
+        }
         return db;
+    }
+
+    /**
+     * Creates a dialog box representing Dave's error response message.
+     *
+     * @param text Error text response from Dave.
+     * @param img Avatar image of Dave.
+     * @return DialogBox configured with error styling.
+     */
+    public static DialogBox getDaveErrorDialog(String text, Image img) {
+        return getDaveDialog(text, img, true);
     }
 }
