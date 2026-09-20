@@ -4,7 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,6 +58,36 @@ public class DaveTest {
     public void getResponse_addTodo_returnsSuccessMessage() {
         String response = this.dave.getResponse("todo read book");
         assertEquals("added: [T][ ] read book", response);
+    }
+
+    @Test
+    public void getResponse_addDuplicateTodo_returnsErrorMessage() {
+        this.dave.getResponse("todo read book");
+        String duplicateResponse = this.dave.getResponse("todo read book");
+        assertTrue(duplicateResponse.startsWith("NEGATIVE! This task already exists in your list:"));
+        assertTrue(duplicateResponse.contains("[T][ ] read book"));
+    }
+
+    @Test
+    public void getResponse_addDuplicateDeadline_returnsErrorMessage() {
+        this.dave.getResponse("deadline return book /by 2026-10-01");
+        String duplicateResponse = this.dave.getResponse("deadline return book /by 2026-10-01");
+        assertTrue(duplicateResponse.startsWith("NEGATIVE! This task already exists in your list:"));
+    }
+
+    @Test
+    public void getResponse_addDuplicateEvent_returnsErrorMessage() {
+        this.dave.getResponse("event party /from 2026-10-01 18:00 /to 2026-10-01 22:00");
+        String duplicateResponse = this.dave.getResponse(
+                "event party /from 2026-10-01 18:00 /to 2026-10-01 22:00");
+        assertTrue(duplicateResponse.startsWith("NEGATIVE! This task already exists in your list:"));
+    }
+
+    @Test
+    public void getResponse_eventStartAfterEnd_returnsErrorMessage() {
+        String response = this.dave.getResponse("event meeting /from 2026-10-05 16:00 /to 2026-10-05 14:00");
+        assertTrue(response.startsWith("NEGATIVE!"));
+        assertTrue(response.contains("strictly earlier than end date/time"));
     }
 
     @Test
@@ -159,6 +192,14 @@ public class DaveTest {
         Dave newDave = new Dave(this.filePath.toString());
         String listResponse = newDave.getResponse("list");
         assertEquals("1. [D][ ] return book (by: Oct 03 2026)", listResponse);
+    }
+
+    @Test
+    public void getWelcome_corruptedLinesInFile_showsWarningInWelcome() throws IOException {
+        Files.write(this.filePath, List.of("T | 0 | valid todo", "garbage unparseable line"));
+        Dave corruptDave = new Dave(this.filePath.toString());
+        String welcome = corruptDave.getWelcome();
+        assertTrue(welcome.contains("Warning: 1 corrupted task entry(ies)"));
     }
 
     @Test

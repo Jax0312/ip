@@ -43,4 +43,31 @@ public class DateTimeParserTest {
         assertThrows(DaveCommandException.class, () -> DateTimeParser.parse("15/09/2026"));
         assertThrows(DaveCommandException.class, () -> DateTimeParser.parse(""));
     }
+
+    @Test
+    public void parse_nonExistentDateFeb30_throwsDaveCommandException() {
+        DaveCommandException e = assertThrows(DaveCommandException.class, () ->
+                DateTimeParser.parse("2026-02-30"));
+        assertTrue(e.getMessage().contains("date does not exist on the calendar"));
+    }
+
+    @Test
+    public void parse_nonExistentDateApr31_throwsDaveCommandException() {
+        DaveCommandException e = assertThrows(DaveCommandException.class, () ->
+                DateTimeParser.parse("2026-04-31 12:00"));
+        assertTrue(e.getMessage().contains("date does not exist on the calendar"));
+    }
+
+    @Test
+    public void parse_leapYearFeb29_success() {
+        ParsedDateTime result = DateTimeParser.parse("2024-02-29");
+        assertEquals(LocalDateTime.of(2024, 2, 29, 0, 0), result.getDateTime());
+    }
+
+    @Test
+    public void parse_nonLeapYearFeb29_throwsDaveCommandException() {
+        DaveCommandException e = assertThrows(DaveCommandException.class, () ->
+                DateTimeParser.parse("2025-02-29"));
+        assertTrue(e.getMessage().contains("date does not exist on the calendar"));
+    }
 }

@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
+import dave.exception.DaveCommandException;
+
 /**
  * Represents a task that occurs within a specific time interval.
  */
@@ -37,9 +39,14 @@ public class Event extends Task {
      * @param hasFromTime True if start time of day was specified, false if date only.
      * @param to End date and time.
      * @param hasToTime True if end time of day was specified, false if date only.
+     * @throws DaveCommandException If the start date-time is equal to or later than the end date-time.
      */
-    public Event(String description, LocalDateTime from, boolean hasFromTime, LocalDateTime to, boolean hasToTime) {
+    public Event(String description, LocalDateTime from, boolean hasFromTime,
+                 LocalDateTime to, boolean hasToTime) {
         super(description);
+        assert from != null : "Event start date-time cannot be null";
+        assert to != null : "Event end date-time cannot be null";
+        validateChronology(from, to);
         this.from = from;
         this.hasFromTime = hasFromTime;
         this.to = to;
@@ -52,6 +59,7 @@ public class Event extends Task {
      * @param description Description of the event.
      * @param from Start date and time.
      * @param to End date and time.
+     * @throws DaveCommandException If the start date-time is equal to or later than the end date-time.
      */
     public Event(String description, LocalDateTime from, LocalDateTime to) {
         this(description, from, true, to, true);
@@ -63,9 +71,24 @@ public class Event extends Task {
      * @param description Description of the event.
      * @param from Start date.
      * @param to End date.
+     * @throws DaveCommandException If the start date is equal to or later than the end date.
      */
     public Event(String description, LocalDate from, LocalDate to) {
         this(description, from.atStartOfDay(), false, to.atStartOfDay(), false);
+    }
+
+    /**
+     * Validates that the start date-time is strictly earlier than the end date-time.
+     *
+     * @param start Start date-time.
+     * @param end End date-time.
+     * @throws DaveCommandException If start date-time is after or equal to end date-time.
+     */
+    private static void validateChronology(LocalDateTime start, LocalDateTime end) {
+        if (!start.isBefore(end)) {
+            throw new DaveCommandException("NEGATIVE! Event start date/time must be strictly earlier "
+                    + "than end date/time.");
+        }
     }
 
     @Override
@@ -116,10 +139,12 @@ public class Event extends Task {
      * @param hasFromTime True if start time was specified, false if date only.
      * @param to New end date and time.
      * @param hasToTime True if end time was specified, false if date only.
+     * @throws DaveCommandException If the new start date-time is equal to or later than the end date-time.
      */
     public void reschedule(LocalDateTime from, boolean hasFromTime, LocalDateTime to, boolean hasToTime) {
         assert from != null : "Event start date-time cannot be null";
         assert to != null : "Event end date-time cannot be null";
+        validateChronology(from, to);
         this.from = from;
         this.hasFromTime = hasFromTime;
         this.to = to;
@@ -136,6 +161,20 @@ public class Event extends Task {
         assert unit != null : "ChronoUnit cannot be null when snoozing";
         this.from = this.from.plus(amount, unit);
         this.to = this.to.plus(amount, unit);
+    }
+
+    @Override
+    public boolean isSameTask(Task other) {
+        if (other == this) {
+            return true;
+        }
+        if (!(other instanceof Event)) {
+            return false;
+        }
+        Event otherEvent = (Event) other;
+        return this.getDescription().equalsIgnoreCase(otherEvent.getDescription())
+                && this.from.equals(otherEvent.from)
+                && this.to.equals(otherEvent.to);
     }
 
     @Override

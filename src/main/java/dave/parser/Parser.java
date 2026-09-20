@@ -1,6 +1,8 @@
 package dave.parser;
 
 import java.time.temporal.ChronoUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import dave.command.Command;
 import dave.exception.DaveCommandException;
@@ -13,17 +15,21 @@ import dave.task.Todo;
  */
 public class Parser {
 
-    /** Delimiter separating deadline task description from due date-time. */
-    private static final String DEADLINE_DELIMITER = " /by ";
-    /** Delimiter separating event task description from start date-time. */
-    private static final String EVENT_FROM_DELIMITER = " /from ";
-    /** Delimiter separating event start date-time from end date-time. */
-    private static final String EVENT_TO_DELIMITER = " /to ";
-    /** Delimiter prefix for snooze target date-time. */
+    /** Reserved delimiter character used for disk storage columns. */
+    private static final String RESERVED_STORAGE_CHAR = "|";
+
+    /** Pattern matching the /by delimiter. */
+    private static final Pattern BY_FLAG_PATTERN = Pattern.compile("(?i)(?:^|\\s+)/by(?:\\s+|$)");
+    /** Pattern matching the /from delimiter. */
+    private static final Pattern FROM_FLAG_PATTERN = Pattern.compile("(?i)(?:^|\\s+)/from(?:\\s+|$)");
+    /** Pattern matching the /to delimiter. */
+    private static final Pattern TO_FLAG_PATTERN = Pattern.compile("(?i)(?:^|\\s+)/to(?:\\s+|$)");
+
+    /** Prefix for snooze target date-time. */
     private static final String SNOOZE_TO_PREFIX = "/to ";
-    /** Delimiter prefix for snooze alternative deadline target date-time. */
+    /** Prefix for snooze alternative deadline target date-time. */
     private static final String SNOOZE_BY_PREFIX = "/by ";
-    /** Delimiter prefix for snooze event start boundary. */
+    /** Prefix for snooze event start boundary. */
     private static final String SNOOZE_FROM_PREFIX = "/from ";
 
     /**
@@ -53,13 +59,15 @@ public class Parser {
      *
      * @param arguments Argument string containing the task description.
      * @return Newly created Todo task.
-     * @throws DaveCommandException If the description is empty.
+     * @throws DaveCommandException If the description is empty or contains reserved characters.
      */
     public static Todo parseTodo(String arguments) {
-        if (arguments.isEmpty()) {
+        String trimmed = arguments.trim();
+        if (trimmed.isEmpty()) {
             throw new DaveCommandException("NEGATIVE! The description of a todo cannot be empty");
         }
-        return new Todo(arguments);
+        validateNoReservedCharacters(trimmed, "Task description");
+        return new Todo(trimmed);
     }
 
     /**
@@ -67,46 +75,90 @@ public class Parser {
      *
      * @param arguments Argument string containing description and '/by' date/time.
      * @return Newly created Deadline task.
-     * @throws DaveCommandException If delimiters are missing, description is empty, or date format is invalid.
+     * @throws DaveCommandException If delimiters are missing, duplicated, or description is empty.
      */
     public static Deadline parseDeadline(String arguments) {
-        String[] attributes = arguments.split(DEADLINE_DELIMITER);
-        if (attributes.length < 2) {
+        int byCount = countMatches(arguments, BY_FLAG_PATTERN);
+        if (byCount > 1) {
+            throw new DaveCommandException("NEGATIVE! The /by delimiter cannot be specified multiple times.");
+        }
+        if (byCount == 0) {
             throw new DaveCommandException("NEGATIVE! A deadline requires /by [time]");
         }
-        if (attributes[0].trim().isEmpty()) {
-            throw new DaveCommandException("NEGATIVE! The description of a deadline cannot be empty");
+
+        Matcher matcher = BY_FLAG_PATTERN.matcher(arguments);
+        if (!matcher.find()) {
+            throw new DaveCommandException("NEGATIVE! A deadline requires /by [time]");
         }
 
-        ParsedDateTime parsed = DateTimeParser.parse(attributes[1]);
-        return new Deadline(attributes[0].trim(), parsed.getDateTime(), parsed.hasTime());
+        String description = arguments.substring(0, matcher.start()).trim();
+        String byString = arguments.substring(matcher.end()).trim();
+
+        if (description.isEmpty()) {
+            throw new DaveCommandException("NEGATIVE! The description of a deadline cannot be empty");
+        }
+        if (byString.isEmpty()) {
+            throw new DaveCommandException("NEGATIVE! A deadline requires /by [time]");
+        }
+
+        validateNoReservedCharacters(description, "Task description");
+        ParsedDateTime parsed = DateTimeParser.parse(byString);
+        return new Deadline(description, parsed.getDateTime(), parsed.hasTime());
     }
 
     /**
      * Parses an Event task from the provided arguments string.
+     * Supports either delimiter ordering (/from before /to, or /to before /from).
      *
      * @param arguments Argument string containing description, '/from' and '/to' dates/times.
      * @return Newly created Event task.
-     * @throws DaveCommandException If delimiters are missing, description is empty, or date format is invalid.
+     * @throws DaveCommandException If delimiters are missing, duplicated, description is empty, or dates invalid.
      */
     public static Event parseEvent(String arguments) {
-        String[] attributes = arguments.split(EVENT_FROM_DELIMITER);
-        if (attributes.length < 2) {
+        int fromCount = countMatches(arguments, FROM_FLAG_PATTERN);
+        int toCount = countMatches(arguments, TO_FLAG_PATTERN);
+
+        if (fromCount > 1) {
+            throw new DaveCommandException("NEGATIVE! The /from delimiter cannot be specified multiple times.");
+        }
+        if (toCount > 1) {
+            throw new DaveCommandException("NEGATIVE! The /to delimiter cannot be specified multiple times.");
+        }
+        if (fromCount == 0 || toCount == 0) {
             throw new DaveCommandException("NEGATIVE! An event requires /from [time] and /to [time]");
         }
-        if (attributes[0].trim().isEmpty()) {
+
+        Matcher fromMatcher = FROM_FLAG_PATTERN.matcher(arguments);
+        Matcher toMatcher = TO_FLAG_PATTERN.matcher(arguments);
+        fromMatcher.find();
+        toMatcher.find();
+
+        String description;
+        String fromString;
+        String toString;
+
+        if (fromMatcher.start() < toMatcher.start()) {
+            description = arguments.substring(0, fromMatcher.start()).trim();
+            fromString = arguments.substring(fromMatcher.end(), toMatcher.start()).trim();
+            toString = arguments.substring(toMatcher.end()).trim();
+        } else {
+            description = arguments.substring(0, toMatcher.start()).trim();
+            toString = arguments.substring(toMatcher.end(), fromMatcher.start()).trim();
+            fromString = arguments.substring(fromMatcher.end()).trim();
+        }
+
+        if (description.isEmpty()) {
             throw new DaveCommandException("NEGATIVE! The description of an event cannot be empty");
         }
-
-        String[] fromTo = attributes[1].split(EVENT_TO_DELIMITER);
-        if (fromTo.length < 2) {
+        if (fromString.isEmpty() || toString.isEmpty()) {
             throw new DaveCommandException("NEGATIVE! An event requires /from [time] and /to [time]");
         }
 
-        ParsedDateTime fromParsed = DateTimeParser.parse(fromTo[0]);
-        ParsedDateTime toParsed = DateTimeParser.parse(fromTo[1]);
+        validateNoReservedCharacters(description, "Task description");
+        ParsedDateTime fromParsed = DateTimeParser.parse(fromString);
+        ParsedDateTime toParsed = DateTimeParser.parse(toString);
 
-        return new Event(attributes[0].trim(),
+        return new Event(description,
                 fromParsed.getDateTime(), fromParsed.hasTime(),
                 toParsed.getDateTime(), toParsed.hasTime());
     }
@@ -116,11 +168,18 @@ public class Parser {
      *
      * @param arguments Argument string containing the 1-based task number.
      * @return 0-based integer index.
-     * @throws DaveCommandException If the argument is not a valid integer.
+     * @throws DaveCommandException If the argument is not a valid positive integer.
      */
     public static int parseIndex(String arguments) {
+        String trimmed = arguments.trim();
+        if (trimmed.isEmpty() || trimmed.contains(" ")) {
+            throw new DaveCommandException("Wrong number!");
+        }
         try {
-            int itemNumber = Integer.parseInt(arguments);
+            int itemNumber = Integer.parseInt(trimmed);
+            if (itemNumber <= 0) {
+                throw new DaveCommandException("Wrong number!");
+            }
             return itemNumber - 1;
         } catch (NumberFormatException e) {
             throw new DaveCommandException("Wrong number!");
@@ -132,13 +191,15 @@ public class Parser {
      *
      * @param arguments Argument string containing the keyword.
      * @return Search keyword.
-     * @throws DaveCommandException If the keyword is empty.
+     * @throws DaveCommandException If the keyword is empty or contains reserved characters.
      */
     public static String parseFind(String arguments) {
-        if (arguments.trim().isEmpty()) {
+        String trimmed = arguments.trim();
+        if (trimmed.isEmpty()) {
             throw new DaveCommandException("NEGATIVE! The search keyword cannot be empty");
         }
-        return arguments.trim();
+        validateNoReservedCharacters(trimmed, "Search keyword");
+        return trimmed;
     }
 
     /**
@@ -163,7 +224,17 @@ public class Parser {
 
         String spec = parts[1].trim();
 
-        if (spec.contains(SNOOZE_FROM_PREFIX)) {
+        if (countMatches(spec, FROM_FLAG_PATTERN) > 1) {
+            throw new DaveCommandException("NEGATIVE! The /from delimiter cannot be specified multiple times.");
+        }
+        if (countMatches(spec, TO_FLAG_PATTERN) > 1) {
+            throw new DaveCommandException("NEGATIVE! The /to delimiter cannot be specified multiple times.");
+        }
+        if (countMatches(spec, BY_FLAG_PATTERN) > 1) {
+            throw new DaveCommandException("NEGATIVE! The /by delimiter cannot be specified multiple times.");
+        }
+
+        if (spec.contains(SNOOZE_FROM_PREFIX) || spec.startsWith("/from")) {
             return parseEventSnooze(index, spec);
         }
 
@@ -184,18 +255,25 @@ public class Parser {
      */
     private static SnoozeRequest parseEventSnooze(int index, String spec) {
         String toPrefix = "/to ";
-        if (!spec.contains(toPrefix)) {
+        if (!spec.contains(toPrefix) && !spec.contains("/to")) {
             throw new DaveCommandException("NEGATIVE! Rescheduling an event requires /from [time] and /to [time]");
         }
 
-        int fromIndex = spec.indexOf(SNOOZE_FROM_PREFIX);
-        int toIndex = spec.indexOf(toPrefix, fromIndex + SNOOZE_FROM_PREFIX.length());
-        if (toIndex == -1) {
+        Matcher fromMatcher = FROM_FLAG_PATTERN.matcher(spec);
+        Matcher toMatcher = TO_FLAG_PATTERN.matcher(spec);
+        if (!fromMatcher.find() || !toMatcher.find()) {
             throw new DaveCommandException("NEGATIVE! Rescheduling an event requires /from [time] and /to [time]");
         }
 
-        String fromStr = spec.substring(fromIndex + SNOOZE_FROM_PREFIX.length(), toIndex).trim();
-        String toStr = spec.substring(toIndex + toPrefix.length()).trim();
+        String fromStr;
+        String toStr;
+        if (fromMatcher.start() < toMatcher.start()) {
+            fromStr = spec.substring(fromMatcher.end(), toMatcher.start()).trim();
+            toStr = spec.substring(toMatcher.end()).trim();
+        } else {
+            toStr = spec.substring(toMatcher.end(), fromMatcher.start()).trim();
+            fromStr = spec.substring(fromMatcher.end()).trim();
+        }
 
         if (fromStr.isEmpty() || toStr.isEmpty()) {
             throw new DaveCommandException("NEGATIVE! Rescheduling an event requires /from [time] and /to [time]");
@@ -269,28 +347,71 @@ public class Parser {
         String normalized = unitText.trim().toLowerCase();
         switch (normalized) {
             case "day":
+                // Fallthrough
             case "days":
+                // Fallthrough
             case "d":
                 return ChronoUnit.DAYS;
             case "hour":
+                // Fallthrough
             case "hours":
+                // Fallthrough
             case "h":
+                // Fallthrough
             case "hr":
+                // Fallthrough
             case "hrs":
                 return ChronoUnit.HOURS;
             case "week":
+                // Fallthrough
             case "weeks":
+                // Fallthrough
             case "w":
                 return ChronoUnit.WEEKS;
             case "minute":
+                // Fallthrough
             case "minutes":
+                // Fallthrough
             case "m":
+                // Fallthrough
             case "min":
+                // Fallthrough
             case "mins":
                 return ChronoUnit.MINUTES;
             default:
                 throw new DaveCommandException("NEGATIVE! Unrecognized time unit: " + unitText
                         + ". Use days, hours, weeks, or minutes.");
+        }
+    }
+
+    /**
+     * Counts occurrences of a regex pattern within a string.
+     *
+     * @param input String to search within.
+     * @param pattern Compiled regex pattern.
+     * @return Count of matches found.
+     */
+    private static int countMatches(String input, Pattern pattern) {
+        Matcher matcher = pattern.matcher(input);
+        int count = 0;
+        while (matcher.find()) {
+            count++;
+        }
+        return count;
+    }
+
+    /**
+     * Validates that the input string does not contain reserved storage characters.
+     *
+     * @param text Text to validate.
+     * @param fieldName Descriptive field name for the error message.
+     * @throws DaveCommandException If the reserved character is found.
+     */
+    private static void validateNoReservedCharacters(String text, String fieldName) {
+        if (text.contains(RESERVED_STORAGE_CHAR)) {
+            throw new DaveCommandException(String.format(
+                    "NEGATIVE! %s cannot contain the '%s' character as it is reserved for storage.",
+                    fieldName, RESERVED_STORAGE_CHAR));
         }
     }
 }

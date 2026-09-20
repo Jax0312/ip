@@ -2,9 +2,11 @@ package dave.task;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +33,35 @@ public class TaskListTest {
 
         assertEquals(1, this.taskList.size());
         assertEquals(todo, this.taskList.get(0));
+    }
+
+    @Test
+    public void hasDuplicate_duplicatePresent_returnsTrue() {
+        this.taskList.add(new Todo("read book"));
+        assertTrue(this.taskList.hasDuplicate(new Todo("read book")));
+        assertTrue(this.taskList.hasDuplicate(new Todo("READ BOOK")));
+    }
+
+    @Test
+    public void hasDuplicate_duplicateAbsent_returnsFalse() {
+        this.taskList.add(new Todo("read book"));
+        assertFalse(this.taskList.hasDuplicate(new Todo("write code")));
+        assertFalse(this.taskList.hasDuplicate(null));
+    }
+
+    @Test
+    public void findDuplicate_duplicatePresent_returnsTask() {
+        Deadline deadline = new Deadline("submit essay", LocalDateTime.of(2026, 10, 1, 12, 0));
+        this.taskList.add(deadline);
+
+        Task found = this.taskList.findDuplicate(
+                new Deadline("submit essay", LocalDateTime.of(2026, 10, 1, 12, 0)));
+        assertEquals(deadline, found);
+    }
+
+    @Test
+    public void findDuplicate_nullTask_returnsNull() {
+        assertNull(this.taskList.findDuplicate(null));
     }
 
     @Test

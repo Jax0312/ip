@@ -39,6 +39,34 @@ public class TaskList {
     }
 
     /**
+     * Checks whether an identical task already exists in the list.
+     *
+     * @param task Task to check for duplication.
+     * @return True if a matching task already exists, false otherwise.
+     */
+    public boolean hasDuplicate(Task task) {
+        return findDuplicate(task) != null;
+    }
+
+    /**
+     * Finds and returns the first existing task that is identical to the given task.
+     *
+     * @param task Task to match against.
+     * @return Matching existing task, or null if none is found.
+     */
+    public Task findDuplicate(Task task) {
+        if (task == null) {
+            return null;
+        }
+        for (Task existing : this.tasks) {
+            if (existing.isSameTask(task)) {
+                return existing;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Deletes and returns the task at the specified 0-based index.
      *
      * @param index 0-based index of the task to delete.

@@ -52,8 +52,21 @@ public class ParserTest {
     }
 
     @Test
+    public void parseTodo_reservedPipeChar_throwsDaveCommandException() {
+        DaveCommandException e = assertThrows(DaveCommandException.class, () ->
+                Parser.parseTodo("read book | chapter 1"));
+        assertTrue(e.getMessage().contains("cannot contain the '|' character"));
+    }
+
+    @Test
     public void parseDeadline_validInput_returnsDeadline() {
         Deadline deadline = Parser.parseDeadline("submit report /by 2026-11-20");
+        assertEquals("submit report", deadline.getDescription());
+    }
+
+    @Test
+    public void parseDeadline_multipleSpacesAroundBy_returnsDeadline() {
+        Deadline deadline = Parser.parseDeadline("submit report   /by    2026-11-20");
         assertEquals("submit report", deadline.getDescription());
     }
 
@@ -68,9 +81,37 @@ public class ParserTest {
     }
 
     @Test
+    public void parseDeadline_duplicateByFlag_throwsDaveCommandException() {
+        DaveCommandException e = assertThrows(DaveCommandException.class, () ->
+                Parser.parseDeadline("submit report /by 2026-10-01 /by 2026-10-02"));
+        assertTrue(e.getMessage().contains("cannot be specified multiple times"));
+    }
+
+    @Test
+    public void parseDeadline_reservedPipeChar_throwsDaveCommandException() {
+        DaveCommandException e = assertThrows(DaveCommandException.class, () ->
+                Parser.parseDeadline("submit report | part 1 /by 2026-10-01"));
+        assertTrue(e.getMessage().contains("cannot contain the '|' character"));
+    }
+
+    @Test
     public void parseEvent_validInput_returnsEvent() {
         Event event = Parser.parseEvent("project meeting /from 2026-11-20 14:00 /to 2026-11-20 16:00");
         assertEquals("project meeting", event.getDescription());
+    }
+
+    @Test
+    public void parseEvent_toBeforeFrom_returnsEvent() {
+        Event event = Parser.parseEvent("project meeting /to 2026-11-20 16:00 /from 2026-11-20 14:00");
+        assertEquals("project meeting", event.getDescription());
+        assertEquals(LocalDateTime.of(2026, 11, 20, 14, 0), event.getFrom());
+        assertEquals(LocalDateTime.of(2026, 11, 20, 16, 0), event.getTo());
+    }
+
+    @Test
+    public void parseEvent_multipleSpacesAroundDelimiters_returnsEvent() {
+        Event event = Parser.parseEvent("meeting   /from   2026-11-20 14:00   /to   2026-11-20 16:00");
+        assertEquals("meeting", event.getDescription());
     }
 
     @Test
@@ -80,9 +121,48 @@ public class ParserTest {
     }
 
     @Test
+    public void parseEvent_duplicateFromFlag_throwsDaveCommandException() {
+        DaveCommandException e = assertThrows(DaveCommandException.class, () ->
+                Parser.parseEvent("meeting /from 2026-10-01 /to 2026-10-02 /from 2026-10-03"));
+        assertTrue(e.getMessage().contains("cannot be specified multiple times"));
+    }
+
+    @Test
+    public void parseEvent_duplicateToFlag_throwsDaveCommandException() {
+        DaveCommandException e = assertThrows(DaveCommandException.class, () ->
+                Parser.parseEvent("meeting /from 2026-10-01 /to 2026-10-02 /to 2026-10-03"));
+        assertTrue(e.getMessage().contains("cannot be specified multiple times"));
+    }
+
+    @Test
+    public void parseEvent_reservedPipeChar_throwsDaveCommandException() {
+        DaveCommandException e = assertThrows(DaveCommandException.class, () ->
+                Parser.parseEvent("meeting | urgent /from 2026-10-01 14:00 /to 2026-10-01 15:00"));
+        assertTrue(e.getMessage().contains("cannot contain the '|' character"));
+    }
+
+    @Test
     public void parseIndex_validNumber_returnsZeroBasedIndex() {
         assertEquals(0, Parser.parseIndex("1"));
         assertEquals(4, Parser.parseIndex("5"));
+    }
+
+    @Test
+    public void parseIndex_zero_throwsDaveCommandException() {
+        DaveCommandException e = assertThrows(DaveCommandException.class, () -> Parser.parseIndex("0"));
+        assertEquals("Wrong number!", e.getMessage());
+    }
+
+    @Test
+    public void parseIndex_negative_throwsDaveCommandException() {
+        DaveCommandException e = assertThrows(DaveCommandException.class, () -> Parser.parseIndex("-1"));
+        assertEquals("Wrong number!", e.getMessage());
+    }
+
+    @Test
+    public void parseIndex_multipleTokens_throwsDaveCommandException() {
+        DaveCommandException e = assertThrows(DaveCommandException.class, () -> Parser.parseIndex("1 2"));
+        assertEquals("Wrong number!", e.getMessage());
     }
 
     @Test

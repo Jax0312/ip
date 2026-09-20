@@ -28,6 +28,8 @@ public class Dave {
     private TaskList tasks;
     /** Flag indicating whether the chatbot application should terminate. */
     private boolean isExit;
+    /** Warning message generated during application startup or task loading. */
+    private String startupNotice;
 
     /**
      * Constructs a new Dave chatbot application instance with the default data file path.
@@ -49,8 +51,15 @@ public class Dave {
         this.isExit = false;
         try {
             this.tasks = new TaskList(this.storage.load());
+            int corrupted = this.storage.getCorruptedLineCount();
+            if (corrupted > 0) {
+                this.startupNotice = String.format(
+                        "Warning: %d corrupted task entry(ies) in data file could not be read and were skipped.",
+                        corrupted);
+            }
         } catch (DaveCommandException e) {
             this.ui.showLoadingError(e.getMessage());
+            this.startupNotice = "Warning: " + e.getMessage();
             this.tasks = new TaskList();
         }
 
@@ -67,12 +76,16 @@ public class Dave {
     }
 
     /**
-     * Returns the welcome greeting message from the chatbot.
+     * Returns the welcome greeting message from the chatbot, including any startup notices.
      *
      * @return Welcome greeting string.
      */
     public String getWelcome() {
-        return this.ui.formatWelcome();
+        String welcome = this.ui.formatWelcome();
+        if (this.startupNotice != null && !this.startupNotice.isEmpty()) {
+            return welcome + "\n\n" + this.startupNotice;
+        }
+        return welcome;
     }
 
     /**
@@ -180,7 +193,7 @@ public class Dave {
      *
      * @param arguments User input arguments containing the index of the task to be removed.
      * @return Formatted string confirming task removal.
-     * @throws DaveCommandException If parsing the index or deleting the task fails.\
+     * @throws DaveCommandException If parsing the index or deleting the task fails.
      */
     private String deleteTask(String arguments) throws DaveCommandException {
         int index = Parser.parseIndex(arguments);
@@ -215,7 +228,7 @@ public class Dave {
      *
      * @param arguments User input arguments containing the index of the task to be updated.
      * @param isComplete True if the task should be marked as completed, false otherwise.
-     * @return Formatted string confirming task status update.\
+     * @return Formatted string confirming task status update.
      * @throws DaveCommandException If parsing the index or updating status fails.
      */
     private String updateTaskStatus(String arguments, boolean isComplete) throws DaveCommandException {
@@ -233,10 +246,15 @@ public class Dave {
      *
      * @param task Task to be added.
      * @return Formatted string confirming task addition.
-     * @throws DaveCommandException If saving tasks to persistent storage fails.
+     * @throws DaveCommandException If the task is a duplicate or saving tasks fails.
      */
     private String addTask(Task task) throws DaveCommandException {
         assert task != null : "Cannot add a null task to TaskList";
+        if (this.tasks.hasDuplicate(task)) {
+            Task duplicate = this.tasks.findDuplicate(task);
+            throw new DaveCommandException(
+                    "NEGATIVE! This task already exists in your list:\n  " + duplicate);
+        }
         int initialSize = this.tasks.size();
         this.tasks.add(task);
         assert this.tasks.size() == initialSize + 1 : "TaskList size must increment by 1 after adding task";

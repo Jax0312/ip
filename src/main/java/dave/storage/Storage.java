@@ -23,6 +23,8 @@ public class Storage {
 
     /** Path to the file where tasks are stored. */
     private final Path filePath;
+    /** Count of corrupted or unparseable lines encountered during the last load operation. */
+    private int corruptedLineCount;
 
     /**
      * Constructs a new Storage instance with the specified file path.
@@ -32,16 +34,28 @@ public class Storage {
     public Storage(String filePath) {
         assert filePath != null && !filePath.trim().isEmpty() : "File path cannot be null or empty";
         this.filePath = Paths.get(filePath);
+        this.corruptedLineCount = 0;
+    }
+
+    /**
+     * Returns the number of corrupted lines encountered during the last load operation.
+     *
+     * @return Number of unparseable lines skipped during load.
+     */
+    public int getCorruptedLineCount() {
+        return this.corruptedLineCount;
     }
 
     /**
      * Loads tasks from the persistent storage file.
      *
      * @return List of tasks loaded from the file, or an empty list if the file does not exist.
-     * @throws DaveCommandException If an I/O error occurs while reading the file.
+     * @throws DaveCommandException If an I/O error or security access denial occurs while reading.
      */
     public ArrayList<Task> load() throws DaveCommandException {
         ArrayList<Task> loadedTasks = new ArrayList<>();
+        this.corruptedLineCount = 0;
+
         if (!Files.exists(this.filePath)) {
             return loadedTasks;
         }
@@ -55,9 +69,11 @@ public class Storage {
                 Task task = parseLineToTask(line);
                 if (task != null) {
                     loadedTasks.add(task);
+                } else {
+                    this.corruptedLineCount++;
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | SecurityException e) {
             throw new DaveCommandException("Unable to load tasks from disk: " + e.getMessage());
         }
 
@@ -121,7 +137,7 @@ public class Storage {
      * Saves the provided list of tasks to the storage file.
      *
      * @param tasks List of tasks to save to disk.
-     * @throws DaveCommandException If an I/O error occurs while writing to the file.
+     * @throws DaveCommandException If an I/O error or security access denial occurs while writing.
      */
     public void save(List<Task> tasks) throws DaveCommandException {
         assert tasks != null : "Task list to save cannot be null";
@@ -136,7 +152,7 @@ public class Storage {
             }
 
             Files.write(this.filePath, lines);
-        } catch (IOException e) {
+        } catch (IOException | SecurityException e) {
             throw new DaveCommandException("Unable to save tasks to disk: " + e.getMessage());
         }
     }

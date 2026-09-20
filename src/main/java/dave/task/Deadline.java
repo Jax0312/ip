@@ -105,6 +105,19 @@ public class Deadline extends Task {
     }
 
     @Override
+    public boolean isSameTask(Task other) {
+        if (other == this) {
+            return true;
+        }
+        if (!(other instanceof Deadline)) {
+            return false;
+        }
+        Deadline otherDeadline = (Deadline) other;
+        return this.getDescription().equalsIgnoreCase(otherDeadline.getDescription())
+                && this.by.equals(otherDeadline.by);
+    }
+
+    @Override
     public String toFileFormat() {
         String byString = this.hasTime
                 ? this.by.format(DATE_TIME_FILE_FORMATTER)

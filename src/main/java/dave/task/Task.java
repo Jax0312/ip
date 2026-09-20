@@ -73,6 +73,15 @@ public abstract class Task {
      */
     public abstract String toFileFormat();
 
+    /**
+     * Determines whether this task is logically identical to another task.
+     * Subclasses define identity based on task-specific attributes.
+     *
+     * @param other Other task to compare against.
+     * @return True if tasks are identical, false otherwise.
+     */
+    public abstract boolean isSameTask(Task other);
+
     @Override
     public String toString() {
         return String.format("[%s] %s", this.getStatusIcon(), this.description);
