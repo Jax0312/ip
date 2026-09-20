@@ -10,7 +10,6 @@ For end-user instructions and command syntax, please refer to the [User Guide](d
 
 - [System Architecture](#system-architecture)
   - [Component Overview](#component-overview)
-  - [Architecture Sequence](#architecture-sequence)
   - [Package Layout](#package-layout)
 - [Development Setup](#development-setup)
   - [Prerequisites](#prerequisites)
@@ -54,30 +53,6 @@ graph TD
 - **`dave.task`**: Domain model representing tasks (`Todo`, `Deadline`, `Event`, `IndexedTask`) and the collection container (`TaskList`).
 - **`dave.storage`**: Handles reading from and writing to disk in pipe-separated format (`data/dave.txt`).
 - **`dave.ui`**: Generates user-facing string representations, banners, lists, and status messages.
-
-### Architecture Sequence
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant UI as MainWindow (GUI)
-    participant Dave as Dave Engine
-    participant Parser as Parser
-    participant TaskList as TaskList
-    participant Storage as Storage
-
-    User->>UI: Types command & presses Enter
-    UI->>Dave: getResponse(input)
-    Dave->>Parser: parseCommand(input) / parseArguments(input)
-    Parser-->>Dave: Command & Task Details
-    Dave->>TaskList: add(task) / delete(i) / snooze...
-    TaskList-->>Dave: Result / Confirmation
-    Dave->>Storage: save(tasks)
-    Storage-->>Dave: Success
-    Dave-->>UI: Response String
-    UI-->>User: Displays user & bot dialog bubbles
-```
 
 ### Package Layout
 
@@ -146,9 +121,9 @@ Use the bundled Gradle wrapper (`./gradlew` on Linux/macOS, `gradlew.bat` on Win
 ### Running the Application
 
 - **Run GUI mode:**
-  ```sh
-  ./gradlew run
-  ```
+```sh
+./gradlew run
+```
 
 ### Running Tests
 
