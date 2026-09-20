@@ -112,16 +112,18 @@ public class TaskList {
     }
 
     /**
-     * Finds and returns tasks whose descriptions contain the specified keyword.
+     * Finds and returns tasks whose descriptions contain the specified keyword,
+     * retaining each task's 1-based index in the task list.
      *
      * @param keyword Keyword to search for within task descriptions.
-     * @return List of matching tasks.
+     * @return List of matching tasks with their original 1-based indices.
      */
-    public ArrayList<Task> find(String keyword) {
-        ArrayList<Task> matchingTasks = new ArrayList<>();
-        for (Task task : this.tasks) {
+    public ArrayList<IndexedTask> find(String keyword) {
+        ArrayList<IndexedTask> matchingTasks = new ArrayList<>();
+        for (int i = 0; i < this.tasks.size(); i++) {
+            Task task = this.tasks.get(i);
             if (task.getDescription().contains(keyword)) {
-                matchingTasks.add(task);
+                matchingTasks.add(new IndexedTask(i + 1, task));
             }
         }
         return matchingTasks;

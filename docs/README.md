@@ -128,11 +128,11 @@ Searches all task descriptions containing the specified search keyword or phrase
 - **Response:**
   ```text
   Here are the matching tasks in your list:
-  1.[D][ ] submit assignment (by: Oct 15 2026 18:00)
+  2. [D][ ] submit assignment (by: Oct 15 2026 18:00)
   ```
 
 > [!NOTE]
-> Search results retain their original 1-based task numbers from the list.
+> Search results retain their original 1-based task numbers from the main list. For example, if `submit assignment` was item #2 in your list, it is displayed as `2. [D][ ] ...` so you can immediately follow up with commands like `mark 2`, `snooze 2`, or `delete 2`.
 
 ---
 

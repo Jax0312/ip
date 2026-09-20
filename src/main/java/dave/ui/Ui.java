@@ -3,6 +3,7 @@ package dave.ui;
 import java.util.List;
 import java.util.Scanner;
 
+import dave.task.IndexedTask;
 import dave.task.Task;
 
 /**
@@ -158,15 +159,15 @@ public class Ui {
     }
 
     /**
-     * Displays matching tasks found by keyword search with 1-based indexing.
+     * Displays matching tasks found by keyword search with their original 1-based indices.
      *
-     * @param tasks List of matching tasks to display.
+     * @param tasks List of matching indexed tasks to display.
      */
-    public void showMatchingTasks(List<Task> tasks) {
+    public void showMatchingTasks(List<IndexedTask> tasks) {
         showLine();
         System.out.println("Here are the matching tasks in your list:");
-        for (int i = 1; i <= tasks.size(); i++) {
-            System.out.printf("%d.%s\n", i, tasks.get(i - 1));
+        for (IndexedTask item : tasks) {
+            System.out.printf("%d. %s\n", item.getOriginalIndex(), item.getTask());
         }
         showLine();
     }
@@ -252,19 +253,20 @@ public class Ui {
     }
 
     /**
-     * Formats matching tasks found by keyword search with 1-based indexing.
+     * Formats matching tasks found by keyword search with their original 1-based indices.
      *
-     * @param tasks List of matching tasks to format.
+     * @param tasks List of matching indexed tasks to format.
      * @return Formatted matching tasks string.
      */
-    public String formatMatchingTasks(List<Task> tasks) {
+    public String formatMatchingTasks(List<IndexedTask> tasks) {
         if (tasks.isEmpty()) {
             return "No matching tasks found in your list.";
         }
         StringBuilder builder = new StringBuilder("Here are the matching tasks in your list:\n");
-        for (int i = 1; i <= tasks.size(); i++) {
-            builder.append(String.format("%d.%s", i, tasks.get(i - 1)));
-            if (i < tasks.size()) {
+        for (int i = 0; i < tasks.size(); i++) {
+            IndexedTask item = tasks.get(i);
+            builder.append(String.format("%d. %s", item.getOriginalIndex(), item.getTask()));
+            if (i < tasks.size() - 1) {
                 builder.append("\n");
             }
         }

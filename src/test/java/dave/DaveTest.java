@@ -131,11 +131,16 @@ public class DaveTest {
     }
 
     @Test
-    public void getResponse_findTask_returnsMatchingTasks() {
-        this.dave.getResponse("todo read book");
+    public void getResponse_findTask_returnsMatchingTasksWithOriginalIndices() {
         this.dave.getResponse("todo buy groceries");
+        this.dave.getResponse("todo read book");
+        this.dave.getResponse("deadline return book /by 2026-10-01");
+
         String findResponse = this.dave.getResponse("find book");
-        assertEquals("Here are the matching tasks in your list:\n1.[T][ ] read book", findResponse);
+        String expected = "Here are the matching tasks in your list:\n"
+                + "2. [T][ ] read book\n"
+                + "3. [D][ ] return book (by: Oct 01 2026)";
+        assertEquals(expected, findResponse);
     }
 
     @Test

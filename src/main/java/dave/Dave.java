@@ -7,6 +7,7 @@ import dave.exception.DaveCommandException;
 import dave.parser.Parser;
 import dave.parser.SnoozeRequest;
 import dave.storage.Storage;
+import dave.task.IndexedTask;
 import dave.task.Task;
 import dave.task.TaskList;
 import dave.ui.Ui;
@@ -184,7 +185,7 @@ public class Dave {
     private String findTasks(String arguments) throws DaveCommandException {
         String keyword = Parser.parseFind(arguments);
         assert keyword != null && !keyword.isEmpty() : "Parser.parseFind must return non-empty keyword";
-        ArrayList<Task> matchingTasks = this.tasks.find(keyword);
+        ArrayList<IndexedTask> matchingTasks = this.tasks.find(keyword);
         return this.ui.formatMatchingTasks(matchingTasks);
     }
 

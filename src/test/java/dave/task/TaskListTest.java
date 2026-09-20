@@ -119,9 +119,10 @@ public class TaskListTest {
         this.taskList.add(bookTask);
         this.taskList.add(otherTask);
 
-        ArrayList<Task> results = this.taskList.find("book");
+        ArrayList<IndexedTask> results = this.taskList.find("book");
         assertEquals(1, results.size());
-        assertEquals(bookTask, results.get(0));
+        assertEquals(1, results.get(0).getOriginalIndex());
+        assertEquals(bookTask, results.get(0).getTask());
     }
 
     @Test
@@ -129,22 +130,26 @@ public class TaskListTest {
         this.taskList.add(new Todo("read book"));
         this.taskList.add(new Todo("write code"));
 
-        ArrayList<Task> results = this.taskList.find("dinner");
+        ArrayList<IndexedTask> results = this.taskList.find("dinner");
         assertTrue(results.isEmpty());
     }
 
     @Test
     public void find_multipleMatchesAcrossTasks_returnsAllMatchingTasks() {
+        Task first = new Todo("eat breakfast");
         Task readBook = new Todo("read book");
-        Task returnBook = new Todo("return book");
         Task cookDinner = new Todo("cook dinner");
+        Task returnBook = new Todo("return book");
+        this.taskList.add(first);
         this.taskList.add(readBook);
-        this.taskList.add(returnBook);
         this.taskList.add(cookDinner);
+        this.taskList.add(returnBook);
 
-        ArrayList<Task> results = this.taskList.find("book");
+        ArrayList<IndexedTask> results = this.taskList.find("book");
         assertEquals(2, results.size());
-        assertEquals(readBook, results.get(0));
-        assertEquals(returnBook, results.get(1));
+        assertEquals(2, results.get(0).getOriginalIndex());
+        assertEquals(readBook, results.get(0).getTask());
+        assertEquals(4, results.get(1).getOriginalIndex());
+        assertEquals(returnBook, results.get(1).getTask());
     }
 }
