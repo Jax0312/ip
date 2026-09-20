@@ -1,7 +1,11 @@
 package dave.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +30,7 @@ public class ParserTest {
         assertEquals(Command.MARK, Parser.parseCommand("mark 2"));
         assertEquals(Command.UNMARK, Parser.parseCommand("unmark 2"));
         assertEquals(Command.DELETE, Parser.parseCommand("delete 3"));
+        assertEquals(Command.SNOOZE, Parser.parseCommand("snooze 2"));
         assertEquals(Command.BYE, Parser.parseCommand("bye"));
     }
 
@@ -96,5 +101,65 @@ public class ParserTest {
     public void parseFind_emptyKeyword_throwsDaveCommandException() {
         assertThrows(DaveCommandException.class, () -> Parser.parseFind(""));
         assertThrows(DaveCommandException.class, () -> Parser.parseFind("   "));
+    }
+
+    @Test
+    public void parseSnooze_defaultDuration_returnsOneDayRelativeSnooze() {
+        SnoozeRequest request = Parser.parseSnooze("2");
+        assertEquals(1, request.getIndex());
+        assertTrue(request.isRelative());
+
+        Deadline deadline = new Deadline("submit essay", LocalDateTime.of(2026, 10, 1, 12, 0));
+        request.applyTo(deadline);
+        assertEquals(LocalDateTime.of(2026, 10, 2, 12, 0), deadline.getBy());
+    }
+
+    @Test
+    public void parseSnooze_relativeOffset_returnsRelativeSnooze() {
+        SnoozeRequest request = Parser.parseSnooze("3 5 days");
+        assertEquals(2, request.getIndex());
+        assertTrue(request.isRelative());
+
+        Deadline deadline = new Deadline("read chapter", LocalDateTime.of(2026, 10, 1, 10, 0));
+        request.applyTo(deadline);
+        assertEquals(LocalDateTime.of(2026, 10, 6, 10, 0), deadline.getBy());
+    }
+
+    @Test
+    public void parseSnooze_targetDateTime_returnsTargetSnooze() {
+        SnoozeRequest request = Parser.parseSnooze("1 /to 2026-11-15 14:00");
+        assertEquals(0, request.getIndex());
+        assertFalse(request.isRelative());
+
+        Deadline deadline = new Deadline("submit thesis", LocalDateTime.of(2026, 10, 1, 12, 0));
+        request.applyTo(deadline);
+        assertEquals(LocalDateTime.of(2026, 11, 15, 14, 0), deadline.getBy());
+    }
+
+    @Test
+    public void parseSnooze_eventBoundaries_returnsEventSnooze() {
+        SnoozeRequest request = Parser.parseSnooze("1 /from 2026-11-01 10:00 /to 2026-11-01 12:00");
+        assertEquals(0, request.getIndex());
+        assertFalse(request.isRelative());
+
+        Event event = new Event("conference",
+                LocalDateTime.of(2026, 10, 1, 10, 0),
+                LocalDateTime.of(2026, 10, 1, 12, 0));
+        request.applyTo(event);
+        assertEquals(LocalDateTime.of(2026, 11, 1, 10, 0), event.getFrom());
+        assertEquals(LocalDateTime.of(2026, 11, 1, 12, 0), event.getTo());
+    }
+
+    @Test
+    public void parseSnooze_emptyArguments_throwsDaveCommandException() {
+        assertThrows(DaveCommandException.class, () -> Parser.parseSnooze(""));
+        assertThrows(DaveCommandException.class, () -> Parser.parseSnooze("   "));
+    }
+
+    @Test
+    public void parseSnooze_invalidFormat_throwsDaveCommandException() {
+        assertThrows(DaveCommandException.class, () -> Parser.parseSnooze("1 invalid text here"));
+        assertThrows(DaveCommandException.class, () -> Parser.parseSnooze("1 /to"));
+        assertThrows(DaveCommandException.class, () -> Parser.parseSnooze("1 /from 2026-10-01"));
     }
 }

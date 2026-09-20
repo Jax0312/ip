@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import dave.command.Command;
 import dave.exception.DaveCommandException;
 import dave.parser.Parser;
+import dave.parser.SnoozeRequest;
 import dave.storage.Storage;
 import dave.task.Task;
 import dave.task.TaskList;
@@ -113,6 +114,8 @@ public class Dave {
                     return addTask(Parser.parseEvent(arguments));
                 case DELETE:
                     return deleteTask(arguments);
+                case SNOOZE:
+                    return snoozeTask(arguments);
                 case UNKNOWN:
                     // Fallthrough
                 default:
@@ -160,7 +163,7 @@ public class Dave {
      *
      * @param arguments User input arguments containing the index of the task to be removed.
      * @return Formatted string confirming task removal.
-     * @throws DaveCommandException If parsing the index or deleting the task fails.
+     * @throws DaveCommandException If parsing the index or deleting the task fails.\
      */
     private String deleteTask(String arguments) throws DaveCommandException {
         int index = Parser.parseIndex(arguments);
@@ -172,11 +175,30 @@ public class Dave {
     }
 
     /**
+     * Snoozes or reschedules a task according to the provided argument specifications.
+     *
+     * @param arguments User input arguments containing the task index and snooze specifications.
+     * @return Formatted string confirming task snooze.
+     * @throws DaveCommandException If parsing fails, the task is invalid, or the task cannot be snoozed.
+     */
+    private String snoozeTask(String arguments) throws DaveCommandException {
+        SnoozeRequest snoozeRequest = Parser.parseSnooze(arguments);
+        assert snoozeRequest != null : "Parser.parseSnooze must return a non-null SnoozeRequest";
+
+        Task task = this.tasks.get(snoozeRequest.getIndex());
+        assert task != null : "TaskList.get must return a valid Task instance";
+
+        snoozeRequest.applyTo(task);
+        saveTasks();
+        return this.ui.formatTaskSnoozed(task);
+    }
+
+    /**
      * Updates the completion status of a task based on the specified 1-based index string.
      *
      * @param arguments User input arguments containing the index of the task to be updated.
      * @param isComplete True if the task should be marked as completed, false otherwise.
-     * @return Formatted string confirming task status update.
+     * @return Formatted string confirming task status update.\
      * @throws DaveCommandException If parsing the index or updating status fails.
      */
     private String updateTaskStatus(String arguments, boolean isComplete) throws DaveCommandException {

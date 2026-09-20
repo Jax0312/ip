@@ -19,11 +19,12 @@ public class DaveTest {
     private Path tempDir;
 
     private Dave dave;
+    private Path filePath;
 
     @BeforeEach
     public void setUp() {
-        Path filePath = this.tempDir.resolve("test-dave.txt");
-        this.dave = new Dave(filePath.toString());
+        this.filePath = this.tempDir.resolve("test-dave.txt");
+        this.dave = new Dave(this.filePath.toString());
     }
 
     @Test
@@ -102,5 +103,61 @@ public class DaveTest {
         this.dave.getResponse("todo buy groceries");
         String findResponse = this.dave.getResponse("find book");
         assertEquals("Here are the matching tasks in your list:\n1.[T][ ] read book", findResponse);
+    }
+
+    @Test
+    public void getResponse_snoozeDefault_postponesDeadlineByOneDay() {
+        this.dave.getResponse("deadline submit essay /by 2026-10-01");
+        String snoozeResponse = this.dave.getResponse("snooze 1");
+        String expected = "Affirmative! I've snoozed this task:\n    [D][ ] submit essay (by: Oct 02 2026)";
+        assertEquals(expected, snoozeResponse);
+    }
+
+    @Test
+    public void getResponse_snoozeRelative_shiftsDeadlineBySpecifiedDays() {
+        this.dave.getResponse("deadline submit essay /by 2026-10-01 18:00");
+        String snoozeResponse = this.dave.getResponse("snooze 1 3 days");
+        String expected = "Affirmative! I've snoozed this task:\n    [D][ ] submit essay (by: Oct 04 2026 18:00)";
+        assertEquals(expected, snoozeResponse);
+    }
+
+    @Test
+    public void getResponse_snoozeTargetDateTime_updatesDeadlineDate() {
+        this.dave.getResponse("deadline submit essay /by 2026-10-01");
+        String snoozeResponse = this.dave.getResponse("snooze 1 /to 2026-10-15 20:00");
+        String expected = "Affirmative! I've snoozed this task:\n    [D][ ] submit essay (by: Oct 15 2026 20:00)";
+        assertEquals(expected, snoozeResponse);
+    }
+
+    @Test
+    public void getResponse_snoozeEventReschedule_updatesEventBoundaries() {
+        this.dave.getResponse("event project meeting /from 2026-10-01 10:00 /to 2026-10-01 12:00");
+        String snoozeResponse = this.dave.getResponse("snooze 1 /from 2026-10-05 14:00 /to 2026-10-05 16:00");
+        String expected = "Affirmative! I've snoozed this task:\n    "
+                + "[E][ ] project meeting (from: Oct 05 2026 14:00 to: Oct 05 2026 16:00)";
+        assertEquals(expected, snoozeResponse);
+    }
+
+    @Test
+    public void getResponse_snoozeTodo_returnsErrorMessage() {
+        this.dave.getResponse("todo read book");
+        String snoozeResponse = this.dave.getResponse("snooze 1");
+        assertEquals("NEGATIVE! Todo tasks cannot be snoozed as they have no date or time.", snoozeResponse);
+    }
+
+    @Test
+    public void getResponse_snoozeInvalidIndex_returnsWrongNumber() {
+        String snoozeResponse = this.dave.getResponse("snooze 5");
+        assertEquals("Wrong number!", snoozeResponse);
+    }
+
+    @Test
+    public void getResponse_snoozePersists_newDaveInstanceLoadsUpdatedTask() {
+        this.dave.getResponse("deadline return book /by 2026-10-01");
+        this.dave.getResponse("snooze 1 2 days");
+
+        Dave newDave = new Dave(this.filePath.toString());
+        String listResponse = newDave.getResponse("list");
+        assertEquals("1. [D][ ] return book (by: Oct 03 2026)", listResponse);
     }
 }
