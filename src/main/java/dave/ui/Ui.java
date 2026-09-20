@@ -18,10 +18,10 @@ public class Ui {
     /** Welcome banner displayed upon application start. */
     private static final String BANNER = """
             ____
-            |  _ \\  __ ___   _____\\s
-            | | | |/ _` \\ \\ / / _ \\
-            | |_| | (_| |\\ V /  __/
-            |____/ \\__,_| \\_/ \\___|
+            |  _ \\\\  __ ___   _____\\\\s
+            | | | |/ _` \\\\ \\\\ / / _ \\\\
+            | |_| | (_| |\\\\ V /  __/
+            |____/ \\\\__,_| \\\\_/ \\\\___|
             """;
 
     /** Scanner used to read input from the standard input stream. */
@@ -56,7 +56,7 @@ public class Ui {
     public void showWelcome() {
         showLine();
         System.out.println(BANNER);
-        System.out.printf("Hello! I'm %s.\nAt your service!\n", NAME);
+        System.out.printf("Hello! I'm %s.\\nAt your service!\\n", NAME);
         showLine();
     }
 
@@ -123,6 +123,15 @@ public class Ui {
      */
     public void showTaskDeleted(Task task) {
         showMessage(formatTaskDeleted(task));
+    }
+
+    /**
+     * Displays confirmation that a task has been snoozed.
+     *
+     * @param task Task that was snoozed.
+     */
+    public void showTaskSnoozed(Task task) {
+        showMessage(formatTaskSnoozed(task));
     }
 
     /**
@@ -198,6 +207,16 @@ public class Ui {
      */
     public String formatTaskDeleted(Task task) {
         return String.format("Affirmative! This task was removed:\n    %s", task);
+    }
+
+    /**
+     * Formats confirmation that a task has been snoozed.
+     *
+     * @param task Task that was snoozed.
+     * @return Formatted task snooze confirmation string.
+     */
+    public String formatTaskSnoozed(Task task) {
+        return String.format("Affirmative! I've snoozed this task:\n    %s", task);
     }
 
     /**
