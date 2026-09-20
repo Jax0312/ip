@@ -36,8 +36,18 @@ public class MainWindow extends AnchorPane {
      */
     @FXML
     public void initialize() {
-        this.scrollPane.vvalueProperty().bind(this.dialogContainer.heightProperty());
+        this.dialogContainer.heightProperty().addListener(observable -> this.scrollPane.setVvalue(1.0));
         this.dialogContainer.prefWidthProperty().bind(this.scrollPane.widthProperty());
+        this.dialogContainer.minHeightProperty().bind(this.scrollPane.heightProperty().subtract(2));
+
+        this.userInput.setOnScroll(event -> {
+            double delta = event.getDeltaY();
+            double height = this.dialogContainer.getHeight();
+            if (height > 0) {
+                this.scrollPane.setVvalue(this.scrollPane.getVvalue() - delta / height);
+            }
+        });
+
         this.userImage = loadImageSafely("/images/DaUser.png");
         this.daveImage = loadImageSafely("/images/DaDave.png");
     }
