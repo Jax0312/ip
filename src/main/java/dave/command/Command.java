@@ -23,6 +23,8 @@ public enum Command {
     EVENT,
     /** Command to delete a task from the list. */
     DELETE,
+    /** Command to snooze or reschedule a task. */
+    SNOOZE,
     /** Unrecognized command. */
     UNKNOWN;
 
