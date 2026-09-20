@@ -3,6 +3,7 @@ package dave.task;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Represents a task that must be completed before a specified deadline.
@@ -20,9 +21,9 @@ public class Deadline extends Task {
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     /** Deadline date and optional time. */
-    private final LocalDateTime by;
+    private LocalDateTime by;
     /** Indicates whether time of day was explicitly specified. */
-    private final boolean hasTime;
+    private boolean hasTime;
 
     /**
      * Constructs a new Deadline task with description, deadline date-time, and time presence flag.
@@ -55,6 +56,52 @@ public class Deadline extends Task {
      */
     public Deadline(String description, LocalDate by) {
         this(description, by.atStartOfDay(), false);
+    }
+
+    @Override
+    public boolean canSnooze() {
+        return true;
+    }
+
+    /**
+     * Returns the deadline date and time.
+     *
+     * @return Deadline LocalDateTime object.
+     */
+    public LocalDateTime getBy() {
+        return this.by;
+    }
+
+    /**
+     * Returns whether time of day was explicitly specified for the deadline.
+     *
+     * @return True if time was specified, false otherwise.
+     */
+    public boolean hasTime() {
+        return this.hasTime;
+    }
+
+    /**
+     * Updates the deadline date and time to a new target.
+     *
+     * @param by New deadline date and time.
+     * @param hasTime True if time was specified, false if date only.
+     */
+    public void snoozeTo(LocalDateTime by, boolean hasTime) {
+        assert by != null : "Deadline date-time cannot be null when snoozing";
+        this.by = by;
+        this.hasTime = hasTime;
+    }
+
+    /**
+     * Postpones the deadline by the specified duration.
+     *
+     * @param amount Amount of time units to add.
+     * @param unit Unit of time to add.
+     */
+    public void snoozeBy(long amount, ChronoUnit unit) {
+        assert unit != null : "ChronoUnit cannot be null when snoozing";
+        this.by = this.by.plus(amount, unit);
     }
 
     @Override

@@ -58,6 +58,15 @@ public abstract class Task {
     }
 
     /**
+     * Returns whether the task has time constraints and can be snoozed.
+     *
+     * @return True if the task can be snoozed, false otherwise.
+     */
+    public boolean canSnooze() {
+        return false;
+    }
+
+    /**
      * Formats the task as a string suitable for persistent storage.
      *
      * @return Serialized string representing the task.
