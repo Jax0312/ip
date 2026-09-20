@@ -28,7 +28,7 @@ public class Main extends Application {
             AnchorPane anchorPane = fxmlLoader.load();
             Scene scene = new Scene(anchorPane);
             stage.setScene(scene);
-            stage.setTitle("Dave - Personal Task Assistant");
+            stage.setTitle("Dave - The Knight Butler");
             stage.setResizable(true);
             stage.setMinWidth(MIN_WINDOW_WIDTH);
             stage.setMinHeight(MIN_WINDOW_HEIGHT);

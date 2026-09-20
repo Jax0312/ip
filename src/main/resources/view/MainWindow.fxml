@@ -9,9 +9,9 @@
 
 <AnchorPane minHeight="500.0" minWidth="400.0" prefHeight="650.0" prefWidth="450.0" stylesheets="@../css/main.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="dave.gui.MainWindow">
   <children>
-    <ScrollPane fx:id="scrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" hvalue="1.0" vvalue="1.0" AnchorPane.bottomAnchor="44.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+    <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="ALWAYS" hvalue="1.0" vvalue="1.0" AnchorPane.bottomAnchor="44.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <content>
-        <VBox fx:id="dialogContainer" prefHeight="600.0" prefWidth="448.0" />
+        <VBox fx:id="dialogContainer" />
       </content>
     </ScrollPane>
     <HBox alignment="CENTER" prefHeight="44.0" spacing="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
